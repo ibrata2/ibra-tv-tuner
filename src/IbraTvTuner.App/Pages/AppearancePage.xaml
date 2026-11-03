@@ -1,0 +1,141 @@
+<UserControl x:Class="IbraTvTuner.App.Pages.AppearancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:IbraTvTuner.App">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+        <StackPanel>
+            <TextBlock Style="{StaticResource H1}" Text="{Binding [NavAppearance], Source={x:Static local:Loc.I}}"/>
+
+            <!-- restore old look: always visible at the top -->
+            <Border Style="{StaticResource Card}" BorderBrush="{StaticResource Warn}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" x:Name="RestoreBtn" Style="{StaticResource DangerBtn}" FontWeight="SemiBold" FontSize="14.5"
+                            Click="RestoreOld_Click" Content="{Binding [RestoreOld], Source={x:Static local:Loc.I}}" VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock FontWeight="SemiBold" Text="{Binding [RestoreOld], Source={x:Static local:Loc.I}}"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{Binding [RestoreOldHint], Source={x:Static local:Loc.I}}"/>
+                        <TextBlock x:Name="BackupText" Style="{StaticResource Hint}" FlowDirection="LeftToRight" HorizontalAlignment="Left"/>
+                        <CheckBox x:Name="RemoveLauncherCheck" Content="{Binding [RemoveLauncherToo], Source={x:Static local:Loc.I}}"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="360"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- preview -->
+                <Border Style="{StaticResource Card}" Margin="0,0,12,12">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource H2}" Margin="0,0,0,8" Text="{Binding [Preview], Source={x:Static local:Loc.I}}"/>
+                        <Viewbox Stretch="Uniform" MaxHeight="420">
+                            <Border x:Name="TvFrame" Width="960" Height="540" CornerRadius="14" BorderBrush="#05080F" BorderThickness="10" ClipToBounds="True">
+                                <Grid x:Name="TvScreen">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Margin="40,22,40,4">
+                                        <TextBlock x:Name="PvClock" DockPanel.Dock="Right" FontSize="26" Text="21:30"/>
+                                        <TextBlock x:Name="PvTitle" FontSize="30" FontWeight="Bold"/>
+                                    </DockPanel>
+                                    <StackPanel x:Name="PvBody" Grid.Row="1" Margin="40,0,40,10"/>
+                                </Grid>
+                            </Border>
+                        </Viewbox>
+                        <TextBlock Style="{StaticResource Hint}" Text="{Binding [Tagline], Source={x:Static local:Loc.I}}" x:Name="PreviewNote"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- controls -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Label Content="{Binding [LauncherLang], Source={x:Static local:Loc.I}}"/>
+                        <ComboBox x:Name="LangCombo" SelectionChanged="Any_Changed">
+                            <ComboBoxItem Content="العربية" Tag="ar"/>
+                            <ComboBoxItem Content="English" Tag="en"/>
+                        </ComboBox>
+                        <Label Content="{Binding [LauncherTitle], Source={x:Static local:Loc.I}}"/>
+                        <TextBox x:Name="TitleBox" Text="IBRA TV" MaxLength="40" TextChanged="Any_Changed"/>
+                        <Label Content="{Binding [Columns], Source={x:Static local:Loc.I}}"/>
+                        <DockPanel>
+                            <TextBlock x:Name="ColsText" DockPanel.Dock="Right" Width="24" Text="5"/>
+                            <Slider x:Name="ColsSlider" Minimum="3" Maximum="8" Value="5" TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="Any_Changed"/>
+                        </DockPanel>
+                        <Label Content="{Binding [Background], Source={x:Static local:Loc.I}}" Margin="0,8,0,0"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox x:Name="Bg1Box" Width="100" Text="#0B1220" FlowDirection="LeftToRight" TextChanged="Any_Changed"/>
+                            <TextBox x:Name="Bg2Box" Width="100" Text="#14324A" FlowDirection="LeftToRight" TextChanged="Any_Changed"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel>
+                                <Label Content="{Binding [Accent], Source={x:Static local:Loc.I}}"/>
+                                <TextBox x:Name="AccentBox" Width="100" Text="#38BDF8" FlowDirection="LeftToRight" TextChanged="Any_Changed"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <Label Content="{Binding [TextColor], Source={x:Static local:Loc.I}}"/>
+                                <TextBox x:Name="TextColorBox" Width="100" Text="#F1F5F9" FlowDirection="LeftToRight" TextChanged="Any_Changed"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Label Content="{Binding [Presets], Source={x:Static local:Loc.I}}"/>
+                        <WrapPanel x:Name="PresetPanel"/>
+                        <CheckBox x:Name="ClockCheck" IsChecked="True" Content="{Binding [ShowClock], Source={x:Static local:Loc.I}}" Click="Any_Changed"/>
+                        <CheckBox x:Name="AllAppsCheck" IsChecked="True" Content="{Binding [ShowAllApps], Source={x:Static local:Loc.I}}" Click="Any_Changed"/>
+                        <CheckBox x:Name="LargeCheck" IsChecked="True" Content="{Binding [LargeText], Source={x:Static local:Loc.I}}" Click="Any_Changed"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- favorites -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Click="LoadApps_Click" Content="{Binding [LoadApps], Source={x:Static local:Loc.I}}"/>
+                        <TextBlock Style="{StaticResource H2}" Margin="0,0,0,6" Text="{Binding [Favorites], Source={x:Static local:Loc.I}}"/>
+                    </DockPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ListBox x:Name="AllAppsList" Height="200" FlowDirection="LeftToRight" SelectionMode="Extended"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0">
+                            <Button Content="⇢ ★" Click="AddFav_Click" ToolTip="{Binding [Favorites], Source={x:Static local:Loc.I}}"/>
+                            <Button Content="★ ⇠" Click="RemoveFav_Click"/>
+                            <Button Content="⇢ ⦸" Click="Hide_Click" ToolTip="{Binding [Hidden], Source={x:Static local:Loc.I}}"/>
+                        </StackPanel>
+                        <ListBox x:Name="FavList" Grid.Column="2" Height="200" FlowDirection="LeftToRight"/>
+                        <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="8,0,0,0">
+                            <Button Content="{Binding [Up], Source={x:Static local:Loc.I}}" Click="Up_Click"/>
+                            <Button Content="{Binding [Down], Source={x:Static local:Loc.I}}" Click="Down_Click"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Style="{StaticResource Hint}" Margin="0,8,0,2" Text="{Binding [Hidden], Source={x:Static local:Loc.I}}"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="⦸ ⇠" Click="Unhide_Click"/>
+                        <ListBox x:Name="HiddenList" Height="70" FlowDirection="LeftToRight"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- steps -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock x:Name="TargetText" Foreground="{StaticResource Accent}" Margin="0,0,0,8"/>
+                    <WrapPanel>
+                        <Button Style="{StaticResource Primary}" Click="Install_Click" Content="{Binding [Step1], Source={x:Static local:Loc.I}}"/>
+                        <Button Style="{StaticResource Primary}" Click="Push_Click" Content="{Binding [Step2], Source={x:Static local:Loc.I}}"/>
+                        <Button Style="{StaticResource Primary}" Click="Open_Click" Content="{Binding [Step3], Source={x:Static local:Loc.I}}"/>
+                        <Button Style="{StaticResource Primary}" Click="SetHome_Click" Content="{Binding [Step4], Source={x:Static local:Loc.I}}"/>
+                        <Button Click="Revert_Click" Content="{Binding [RevertTheme], Source={x:Static local:Loc.I}}"/>
+                    </WrapPanel>
+                    <TextBlock x:Name="StepStatus" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>IBRA TV Tuner</title>
+  <defs>
+    <!-- dark glass tile -->
+    <linearGradient id="glass" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#1B2A44"/>
+      <stop offset="0.55" stop-color="#0E1729"/>
+      <stop offset="1" stop-color="#070C18"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.06"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7DE3FF"/>
+      <stop offset="1" stop-color="#22B8F0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#38BDF8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="tile"><rect x="40" y="40" width="944" height="944" rx="208"/></clipPath>
+  </defs>
+
+  <!-- tile -->
+  <rect x="40" y="40" width="944" height="944" rx="208" fill="url(#glass)"/>
+  <g clip-path="url(#tile)">
+    <ellipse cx="512" cy="560" rx="420" ry="300" fill="url(#glow)" opacity="0.55"/>
+    <path d="M40 40 H984 V420 C760 360 300 380 40 470 Z" fill="url(#sheen)"/>
+  </g>
+  <rect x="44" y="44" width="936" height="936" rx="204" fill="none" stroke="url(#edge)" stroke-width="8"/>
+
+  <!-- TV screen with rounded corners -->
+  <rect x="196" y="236" width="632" height="440" rx="88" fill="#081222" fill-opacity="0.65" stroke="url(#sky)" stroke-width="56"/>
+  <!-- stand -->
+  <path d="M424 780 H600" stroke="url(#sky)" stroke-width="56" stroke-linecap="round"/>
+  <path d="M512 704 V770" stroke="url(#sky)" stroke-width="48" stroke-linecap="round"/>
+
+  <!-- single horizontal tuning slider inside the screen -->
+  <path d="M300 456 H724" stroke="#38BDF8" stroke-opacity="0.35" stroke-width="44" stroke-linecap="round"/>
+  <path d="M300 456 H572" stroke="url(#sky)" stroke-width="44" stroke-linecap="round"/>
+  <circle cx="584" cy="456" r="64" fill="#E9FAFF" stroke="url(#sky)" stroke-width="22"/>
+</svg>

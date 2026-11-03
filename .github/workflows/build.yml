@@ -1,0 +1,131 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Android build tools (apt, no Gradle)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q android-sdk-platform-23 aapt dalvik-exchange zipalign apksigner openjdk-17-jdk-headless
+      - name: Build and sign APKs
+        env:
+          IBRA_KEYSTORE_B64: ${{ secrets.IBRA_KEYSTORE_B64 }}
+          IBRA_KEYSTORE_PASS: ${{ secrets.IBRA_KEYSTORE_PASS }}
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          # Use the system tools, not the runner's preinstalled SDK.
+          unset ANDROID_HOME ANDROID_SDK_ROOT
+          android/build.sh
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Core tests (Linux)
+        run: dotnet run --project tests/IbraTvTuner.Core.Tests -c Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: android/out/*.apk
+
+  windows:
+    needs: android
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: android/out
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Core tests (Windows)
+        run: dotnet run --project tests/IbraTvTuner.Core.Tests -c Release
+      - name: Publish portable EXE (win-x64, self-contained, single file)
+        run: >
+          dotnet publish src/IbraTvTuner.App -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:DebugType=none
+          -p:Version=0.1.${{ github.run_number }} -o publish
+      - name: Check icon inside the EXE (16, 32, 256 px)
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $exe = Resolve-Path publish/IbraTvTuner.exe
+          New-Item -ItemType Directory -Force checks | Out-Null
+          foreach ($s in 16, 32, 256) {
+            $ico = [System.Drawing.Icon]::ExtractIcon($exe, 0, $s)
+            if ($null -eq $ico) { throw "no $s px icon in EXE" }
+            $bmp = $ico.ToBitmap()
+            "$s px -> $($bmp.Width)x$($bmp.Height)"
+            $bmp.Save("checks/exe-icon-$s.png")
+          }
+          (Get-Item $exe).Length / 1MB | ForEach-Object { "EXE size: {0:N1} MB" -f $_ }
+      - name: Smoke start (window opens, screenshot)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $p = Start-Process -FilePath publish/IbraTvTuner.exe -PassThru
+          Start-Sleep -Seconds 12
+          if ($p.HasExited) { throw "app exited early with code $($p.ExitCode)" }
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("checks/smoke-screenshot.png")
+          "main window title: $($p.MainWindowTitle)"
+          Stop-Process -Id $p.Id -Force
+      - name: Package portable zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item publish/IbraTvTuner.exe dist/
+          Copy-Item README.md, LICENSE, THIRD_PARTY_NOTICES.md, docs/TESTING.md dist/
+          Copy-Item android/out/*.apk dist/
+          Compress-Archive -Path dist/* -DestinationPath IbraTvTuner-win-x64-portable.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IbraTvTuner-win-x64-portable
+          path: IbraTvTuner-win-x64-portable.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: checks
+          path: checks/
+
+  draft-release:
+    needs: windows
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: art
+      - name: Update draft release v0.1.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp art/IbraTvTuner-win-x64-portable/*.zip .
+          cp art/apks/*.apk .
+          files="IbraTvTuner-win-x64-portable.zip ibra-tv-launcher.apk ibra-tv-testapp.apk"
+          if gh release view v0.1.0 >/dev/null 2>&1; then
+            gh release edit v0.1.0 --draft --notes-file docs/RELEASE_NOTES.md
+            gh release upload v0.1.0 $files --clobber
+          else
+            gh release create v0.1.0 --draft --title "IBRA TV Tuner v0.1.0" --notes-file docs/RELEASE_NOTES.md --target "$GITHUB_SHA" $files
+          fi

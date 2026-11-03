@@ -1,0 +1,60 @@
+<UserControl x:Class="IbraTvTuner.App.Pages.ChangesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:IbraTvTuner.App">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Style="{StaticResource H1}" Text="{Binding [NavChanges], Source={x:Static local:Loc.I}}"/>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" BorderBrush="{StaticResource Warn}">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Style="{StaticResource DangerBtn}" FontWeight="SemiBold" VerticalAlignment="Center"
+                        Click="RestoreOld_Click" Content="{Binding [RestoreOld], Source={x:Static local:Loc.I}}"/>
+                <StackPanel>
+                    <TextBlock FontWeight="SemiBold" Text="{Binding [HomeBackup], Source={x:Static local:Loc.I}}"/>
+                    <TextBlock x:Name="BackupText" Style="{StaticResource Hint}" FlowDirection="LeftToRight" HorizontalAlignment="Left"/>
+                    <CheckBox x:Name="RemoveLauncherCheck" Content="{Binding [RemoveLauncherToo], Source={x:Static local:Loc.I}}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="330"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button DockPanel.Dock="Right" Click="Refresh_Click" Content="{Binding [RefreshList], Source={x:Static local:Loc.I}}"/>
+                        <TextBlock Style="{StaticResource H2}" Margin="0,0,0,8" Text="{Binding [Batches], Source={x:Static local:Loc.I}}"/>
+                    </DockPanel>
+                    <ListBox x:Name="BatchList" SelectionChanged="BatchList_SelectionChanged" DisplayMemberPath="Display"/>
+                </DockPanel>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0">
+                <DockPanel>
+                    <WrapPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                        <Button x:Name="RollbackBtn" Style="{StaticResource Primary}" IsEnabled="False" Click="Rollback_Click"
+                                Content="{Binding [Rollback], Source={x:Static local:Loc.I}}"/>
+                        <TextBlock x:Name="SummaryText" VerticalAlignment="Center" Margin="8,0,0,8"/>
+                    </WrapPanel>
+                    <DataGrid x:Name="ItemsGrid" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn x:Name="CPkg" Binding="{Binding Package}" Width="2*"/>
+                            <DataGridTextColumn x:Name="CChange" Binding="{Binding Change}" Width="110"/>
+                            <DataGridTextColumn x:Name="CBefore" Binding="{Binding Before}" Width="90"/>
+                            <DataGridTextColumn x:Name="CAfter" Binding="{Binding After}" Width="90"/>
+                            <DataGridTextColumn x:Name="CResult" Binding="{Binding Result}" Width="110"/>
+                            <DataGridTextColumn x:Name="CError" Binding="{Binding Error}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

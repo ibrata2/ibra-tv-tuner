@@ -1,0 +1,28 @@
+# build output
+bin/
+obj/
+publish/
+out/
+android/out/
+*.user
+.vs/
+.vscode/
+*.log
+logs/
+
+# signing keys, device data and anything local — never committed or released
+android/.keys/
+*.jks
+*.keystore
+*.p12
+*.pem
+adbkey
+adbkey.pub
+.android/
+devices.json
+settings.json
+journal/
+home-backup/
+measurements/
+*.local.json
+platform-tools/

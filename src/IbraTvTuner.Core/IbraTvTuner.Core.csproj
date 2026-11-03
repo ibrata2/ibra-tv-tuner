@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>IbraTvTuner.Core</RootNamespace>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Per-model recommendation lists derived from CleanYourTV (MIT). See THIRD_PARTY_NOTICES.md -->
+    <EmbeddedResource Include="Data\catalog.json.gz" LogicalName="IbraTvTuner.catalog.json.gz" Condition="Exists('Data\catalog.json.gz')" />
+  </ItemGroup>
+
+</Project>
