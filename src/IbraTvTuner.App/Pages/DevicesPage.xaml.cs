@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using IbraTvTuner.Core;
 using IbraTvTuner.Core.Adb;
+using IbraTvTuner.Core.Discovery;
 using IbraTvTuner.Core.Storage;
 using Microsoft.Win32;
 
