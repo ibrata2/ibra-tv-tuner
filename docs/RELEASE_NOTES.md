@@ -20,4 +20,5 @@ The launcher and self-test APKs are inside the EXE; they are attached here too.
 - Samsung Tizen, LG webOS, VIDAA, Roku: not supported (no ADB).
 - Fire TV: Home cannot be replaced (Fire OS restriction); inventory/disable only.
 - ADB is not bundled (Google licence); the app finds it or downloads Google's official Platform-Tools after you accept.
+- The APKs in this draft are signed with a per-build key (the release signing secret could not be set from here). If a later build refuses to update the launcher, use *Restore my old look* with *remove launcher* first, then install again.
 - App labels are not available over plain ADB, so package names are shown in the Apps page.
