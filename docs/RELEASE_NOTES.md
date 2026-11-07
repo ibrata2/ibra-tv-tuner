@@ -1,4 +1,11 @@
-## IBRA TV Tuner v0.1.0 (draft)
+## IBRA TV Tuner + IBRA HOME v0.1.0 (تجريبي / pre-release)
+
+| الملف | لأي جهاز | شنو هو |
+|---|---|---|
+| `IbraTvTuner-win-x64-portable.zip` | 💻 الحاسبة (ويندوز 10/11) | برنامج IBRA TV Tuner — فكّ الضغط وشغّل `IbraTvTuner.exe` |
+| `ibra-home-installer.apk` | 📱 الموبايل (أندرويد) | مثبّت IBRA HOME على التلفزيون عبر الواي فاي، بدون حاسبة |
+| `ibra-tv-launcher.apk` | 📺 التلفزيون / البوكس | واجهة IBRA HOME نفسها (للتثبيت اليدوي) |
+| `ibra-tv-testapp.apk` | 🧪 — | تطبيق فحص يستخدمه برنامج الحاسبة فقط |
 
 **Portable:** download `IbraTvTuner-win-x64-portable.zip`, unzip, run `IbraTvTuner.exe` (Windows 10/11 x64, no install, no admin).
 The launcher and self-test APKs are inside the EXE; they are attached here too.

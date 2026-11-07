@@ -109,7 +109,7 @@ jobs:
           name: checks
           path: checks/
 
-  draft-release:
+  release:
     needs: windows
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
@@ -118,7 +118,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: art
-      - name: Update draft release v0.1.0
+      - name: Update release v0.1.0 (published pre-release, visible on phone and PC)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -126,8 +126,8 @@ jobs:
           cp art/apks/*.apk .
           files="IbraTvTuner-win-x64-portable.zip ibra-tv-launcher.apk ibra-home-installer.apk ibra-tv-testapp.apk"
           if gh release view v0.1.0 >/dev/null 2>&1; then
-            gh release edit v0.1.0 --draft --notes-file docs/RELEASE_NOTES.md
+            gh release edit v0.1.0 --draft=false --prerelease --title "IBRA TV Tuner + IBRA HOME v0.1.0" --notes-file docs/RELEASE_NOTES.md
             gh release upload v0.1.0 $files --clobber
           else
-            gh release create v0.1.0 --draft --title "IBRA TV Tuner v0.1.0" --notes-file docs/RELEASE_NOTES.md --target "$GITHUB_SHA" $files
+            gh release create v0.1.0 --prerelease --title "IBRA TV Tuner + IBRA HOME v0.1.0" --notes-file docs/RELEASE_NOTES.md --target "$GITHUB_SHA" $files
           fi
