@@ -39,9 +39,10 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * IBRA TV home screen. Remote friendly: D-pad moves focus, OK opens, long-press OK or MENU opens tile
+ * IBRA HOME screen (live weather, football, today's episodes, Iraqi apps row, all apps). Remote friendly: D-pad moves focus, OK opens, long-press OK or MENU opens tile
  * options, BACK never leaves Home. Arabic (RTL) and English.
  */
 public class HomeActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -53,8 +54,19 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         Drawable banner;
         Drawable icon;
         boolean special;
+        boolean missing;   // not installed: opening it goes to the store page
         Intent intent;
     }
+
+    /** Built-in Iraqi apps row. Each entry: label, then package alternatives (TV build first). */
+    static final String[][] IRAQI_APPS = {
+            {"سينمانا", "com.shabakaty.cbox.cinemana", "com.shabakaty.cbox.cinemanb", "com.shabakaty.cbox.cinemanx"},
+            {"YouTube", "com.google.android.youtube.tv", "com.google.android.youtube"},
+            {"شاهد", "net.mbc.shahidTV", "net.mbc.shahid"},
+            {"Netflix", "com.netflix.ninja", "com.netflix.mediaclient"},
+            {"Prime Video", "com.amazon.amazonvideo.livingroom", "com.amazon.avod.thirdpartyclient"},
+            {"Downloader", "com.esaba.downloader"},
+    };
 
     private Config cfg;
     private LinearLayout content;
@@ -62,6 +74,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     private final Handler handler = new Handler();
     private boolean showHidden = false;
     private String focusPkg = null;
+    private final AtomicBoolean refreshing = new AtomicBoolean(false);
 
     private final Runnable tick = new Runnable() {
         @Override public void run() {
@@ -94,6 +107,28 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         rebuild();
         handler.removeCallbacks(tick);
         handler.post(tick);
+        refreshFeeds(false);
+    }
+
+    /** Refreshes stale feeds in the background; rebuilds the screen if anything new arrived. */
+    private void refreshFeeds(final boolean force) {
+        if (cfg == null || !(cfg.showWeather || cfg.showFootball || cfg.showShows)) return;
+        if (!refreshing.compareAndSet(false, true)) return;
+        final double lat = cfg.lat, lon = cfg.lon;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                boolean changed = false;
+                try { changed = Feeds.refresh(getApplicationContext(), lat, lon, force); }
+                catch (Throwable ignored) { }
+                finally { refreshing.set(false); }
+                final boolean c = changed;
+                handler.post(new Runnable() { @Override public void run() {
+                    if (c && !isFinishing()) rebuild();
+                    else if (force) Toast.makeText(HomeActivity.this,
+                            s("ما وصلت معلومات جديدة، تأكد من الإنترنت", "No new data — check the internet"), Toast.LENGTH_SHORT).show();
+                }});
+            }
+        }, "ibra-feeds").start();
     }
 
     @Override
@@ -203,7 +238,14 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = text(cfg.title, 30, true);
+        title.setTextColor(cfg.accent);
+        title.setLetterSpacing(0.08f);
         header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView date = text(new java.text.SimpleDateFormat("EEEE d MMMM",
+                cfg.arabic() ? new java.util.Locale("ar") : java.util.Locale.US).format(new Date()), 18, false);
+        date.setAlpha(0.75f);
+        date.setPadding(dp(16), 0, dp(16), 0);
+        header.addView(date);
         clock = text("", 28, false);
         clock.setVisibility(cfg.showClock ? View.VISIBLE : View.GONE);
         header.addView(clock);
@@ -224,20 +266,32 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         Map<String, App> byPkg = new LinkedHashMap<String, App>();
         for (App a : apps) byPkg.put(a.pkg, a);
 
+        View first = infoRow();
+
         List<App> favs = new ArrayList<App>();
         for (String p : cfg.favorites) if (byPkg.containsKey(p)) favs.add(byPkg.get(p));
+        List<App> iraqi = cfg.showIraqiApps ? iraqiApps(byPkg) : new ArrayList<App>();
+        java.util.Set<String> inIraqi = new java.util.HashSet<String>();
+        for (App a : iraqi) inIraqi.add(a.pkg);
         List<App> rest = new ArrayList<App>();
         List<App> hidden = new ArrayList<App>();
         for (App a : apps) {
-            if (cfg.favorites.contains(a.pkg)) continue;
+            if (cfg.favorites.contains(a.pkg) || inIraqi.contains(a.pkg)) continue;
             if (cfg.hidden.contains(a.pkg)) hidden.add(a); else rest.add(a);
         }
 
-        View first = null;
         if (!favs.isEmpty()) first = section(s("المفضلة", "Favorites"), favs, first);
+        if (!iraqi.isEmpty()) first = section(s("تطبيقات عراقية", "Iraqi apps"), iraqi, first);
         if (cfg.showAllApps || favs.isEmpty()) first = section(s("كل التطبيقات", "All apps"), rest, first);
         if (showHidden && !hidden.isEmpty()) first = section(s("مخفية", "Hidden"), hidden, first);
         first = section(s("النظام", "System"), specials(pm), first);
+
+        TextView credit = text(s("IBRA HOME · تصميم وتطوير إبراهيم الخزرجي · t.me/ibraprogram",
+                "IBRA HOME · by Ibrahim Al-Khazraji · t.me/ibraprogram"), 13, false);
+        credit.setAlpha(0.45f);
+        credit.setGravity(Gravity.CENTER);
+        credit.setPadding(0, dp(24), 0, 0);
+        content.addView(credit);
 
         setContentView(root);
 
@@ -320,6 +374,13 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         }
         box.addView(card, new LinearLayout.LayoutParams(w, h));
 
+        if (a.missing) {
+            img.setAlpha(0.35f);
+            TextView dl = text(s("⬇ تنزيل", "⬇ Get"), 15, true);
+            dl.setTextColor(cfg.accent);
+            dl.setGravity(Gravity.CENTER);
+            card.addView(dl, new FrameLayout.LayoutParams(-1, -1, Gravity.CENTER));
+        }
         final TextView label = text(a.label, 17, false);
         label.setSingleLine(true);
         label.setEllipsize(TextUtils.TruncateAt.END);
@@ -355,6 +416,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
 
     private void open(App a) {
         if ("#hidden".equals(a.pkg)) { showHidden = !showHidden; rebuild(); return; }
+        if (a.missing) { openStore(a.pkg); return; }
         try {
             startActivity(a.intent);
         } catch (Exception e) {
@@ -363,7 +425,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     }
 
     private void options(final App a) {
-        if (a.special) return;
+        if (a.special || a.missing) return;
         final boolean fav = cfg.favorites.contains(a.pkg);
         final boolean hid = cfg.hidden.contains(a.pkg);
         final List<String> labels = new ArrayList<String>();
@@ -400,6 +462,199 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
                         if (!info) cfg.save(HomeActivity.this); // triggers rebuild via prefs listener
                     }
                 })
+                .show();
+    }
+
+    // ------------------------------------------------------------------ Iraqi apps
+
+    private List<App> iraqiApps(Map<String, App> installed) {
+        List<App> out = new ArrayList<App>();
+        List<String[]> entries = new ArrayList<String[]>();
+        for (String[] e : IRAQI_APPS) entries.add(e);
+        for (String p : cfg.extraApps) entries.add(new String[]{null, p});
+        for (String[] e : entries) {
+            App found = null;
+            for (int i = 1; i < e.length && found == null; i++) found = installed.get(e[i]);
+            if (found != null) {
+                if (!out.contains(found)) out.add(found);
+            } else if (e[0] != null) {
+                App m = new App();
+                m.missing = true;
+                m.pkg = e[1];
+                m.label = e[0];
+                m.icon = getResources().getDrawable(android.R.drawable.stat_sys_download);
+                out.add(m);
+            }
+        }
+        return out;
+    }
+
+    private void openStore(String pkg) {
+        Intent[] tries = {
+                new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)),
+                new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + pkg)),
+        };
+        for (Intent i : tries) {
+            try { startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return; } catch (Exception ignored) { }
+        }
+        Toast.makeText(this, s("ما لگيت متجر تطبيقات على الجهاز", "No app store on this device"), Toast.LENGTH_LONG).show();
+    }
+
+    // ------------------------------------------------------------------ info cards
+
+    /** Weather, football and shows cards in one row. Returns the first focusable card or null. */
+    private View infoRow() {
+        List<View> cards = new ArrayList<View>();
+        final boolean ar = cfg.arabic();
+
+        if (cfg.showWeather) {
+            final Feeds.Weather w = Feeds.weather(this);
+            List<String> lines = new ArrayList<String>();
+            String big;
+            if (w == null) { big = "—"; lines.add(s("الطقس يتحدّث…", "Loading weather…")); }
+            else {
+                big = Feeds.weatherSymbol(w.code, w.day) + "  " + Math.round(w.temp) + "°";
+                lines.add(cfg.city + " · " + Feeds.weatherText(w.code, ar));
+                if (!w.max.isEmpty()) lines.add(s("العظمى ", "High ") + Math.round(w.max.get(0)) + "°   "
+                        + s("الصغرى ", "Low ") + Math.round(w.min.get(0)) + "°");
+            }
+            cards.add(card("#weather", s("الطقس", "Weather"), big, lines, new Runnable() {
+                @Override public void run() { weatherDialog(w); }
+            }));
+        }
+        if (cfg.showFootball) {
+            final List<Feeds.Match> ms = Feeds.matches(this);
+            List<String> lines = new ArrayList<String>();
+            int live = 0;
+            for (Feeds.Match m : ms) if ("in".equals(m.state)) live++;
+            for (int i = 0; i < ms.size() && i < 3; i++) lines.add(matchLine(ms.get(i)));
+            String big = ms.isEmpty() ? "—" : live > 0 ? s("● مباشر ", "● LIVE ") + live : String.valueOf(ms.size());
+            if (ms.isEmpty()) lines.add(!Feeds.has(this, "football")
+                    ? s("المباريات تتحدّث…", "Loading matches…") : s("ماكو مباريات اليوم", "No matches today"));
+            cards.add(card("#football", s("مباريات اليوم", "Today's matches"), big, lines, new Runnable() {
+                @Override public void run() { listDialog(s("مباريات اليوم", "Today's matches"), matchLines(ms)); }
+            }));
+        }
+        if (cfg.showShows) {
+            final List<Feeds.Episode> eps = Feeds.shows(this);
+            List<String> lines = new ArrayList<String>();
+            for (int i = 0; i < eps.size() && i < 3; i++) lines.add(eps.get(i).show);
+            if (eps.isEmpty()) lines.add(s("القائمة تتحدّث…", "Loading…"));
+            cards.add(card("#shows", s("حلقات جديدة اليوم", "New episodes today"),
+                    eps.isEmpty() ? "—" : String.valueOf(eps.size()), lines, new Runnable() {
+                @Override public void run() {
+                    List<String> l = new ArrayList<String>();
+                    for (Feeds.Episode e : eps) l.add(e.show + "   S" + e.season + "·E" + e.number
+                            + (e.channel.isEmpty() ? "" : "   (" + e.channel + ")"));
+                    listDialog(s("حلقات جديدة اليوم", "New episodes today"), l);
+                }
+            }));
+        }
+        if (cards.isEmpty()) return null;
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setClipChildren(false);
+        row.setPadding(0, dp(12), 0, dp(6));
+        int gap = dp(16);
+        for (int i = 0; i < cards.size(); i++) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(150), 1);
+            if (i < cards.size() - 1) lp.setMarginEnd(gap);
+            row.addView(cards.get(i), lp);
+        }
+        content.addView(row);
+        return cards.get(0);
+    }
+
+    private View card(final String tag, String title, String big, List<String> lines, final Runnable onOpen) {
+        final LinearLayout c = new LinearLayout(this);
+        c.setOrientation(LinearLayout.VERTICAL);
+        c.setTag(tag);
+        c.setFocusable(true);
+        c.setFocusableInTouchMode(true);
+        c.setClickable(true);
+        c.setPadding(dp(18), dp(12), dp(18), dp(12));
+        final GradientDrawable shape = new GradientDrawable();
+        shape.setCornerRadius(dp(16));
+        shape.setColor(0x26FFFFFF);
+        shape.setStroke(dp(2), (cfg.accent & 0x00FFFFFF) | 0x55000000);
+        c.setBackground(shape);
+
+        TextView t = text(title, 15, true);
+        t.setTextColor(cfg.accent);
+        c.addView(t);
+        TextView b = text(big, 28, true);
+        b.setSingleLine(true);
+        c.addView(b);
+        for (String l : lines) {
+            TextView v = text(l, 14, false);
+            v.setSingleLine(true);
+            v.setEllipsize(TextUtils.TruncateAt.END);
+            v.setAlpha(0.85f);
+            c.addView(v);
+        }
+        c.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override public void onFocusChange(View v, boolean has) {
+                v.animate().scaleX(has ? 1.04f : 1f).scaleY(has ? 1.04f : 1f).setDuration(120).start();
+                v.setElevation(has ? dp(10) : 0);
+                shape.setStroke(dp(has ? 3 : 2), has ? cfg.accent : (cfg.accent & 0x00FFFFFF) | 0x55000000);
+                if (has) focusPkg = tag;
+            }
+        });
+        c.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { onOpen.run(); }
+        });
+        c.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override public boolean onLongClick(View v) { refreshFeeds(true); return true; }
+        });
+        c.setOnKeyListener(new View.OnKeyListener() {
+            @Override public boolean onKey(View v, int code, KeyEvent e) {
+                if (code == KeyEvent.KEYCODE_MENU && e.getAction() == KeyEvent.ACTION_UP) { refreshFeeds(true); return true; }
+                return false;
+            }
+        });
+        return c;
+    }
+
+    private String matchLine(Feeds.Match m) {
+        if ("pre".equals(m.state)) return Feeds.time(m.kickoff) + "  " + m.home + " - " + m.away;
+        String score = m.home + " " + m.homeScore + "-" + m.awayScore + " " + m.away;
+        return ("in".equals(m.state) ? "● " : "") + score;
+    }
+
+    private List<String> matchLines(List<Feeds.Match> ms) {
+        List<String> out = new ArrayList<String>();
+        String lastLeague = null;
+        for (Feeds.Match m : ms) {
+            if (!m.league.equals(lastLeague)) { out.add("— " + m.league + " —"); lastLeague = m.league; }
+            String extra = "in".equals(m.state) ? "   (" + m.detail + ")" : "post".equals(m.state) ? s("   (انتهت)", "   (FT)") : "";
+            out.add(matchLine(m) + extra);
+        }
+        return out;
+    }
+
+    private void weatherDialog(Feeds.Weather w) {
+        List<String> l = new ArrayList<String>();
+        if (w != null) {
+            for (int i = 0; i < w.days.size(); i++) {
+                l.add(Feeds.dayName(w.days.get(i), cfg.arabic()) + "   " + Feeds.weatherSymbol(w.codes.get(i), true) + "  "
+                        + Math.round(w.max.get(i)) + "° / " + Math.round(w.min.get(i)) + "°   "
+                        + Feeds.weatherText(w.codes.get(i), cfg.arabic()));
+            }
+        }
+        listDialog(s("طقس ", "Weather · ") + cfg.city, l);
+    }
+
+    private void listDialog(String title, List<String> lines) {
+        if (lines.isEmpty()) lines.add(s("ماكو معلومات بعد. اضغط مطوّلاً على البطاقة للتحديث.",
+                "Nothing yet. Long-press the card to refresh."));
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setItems(lines.toArray(new CharSequence[0]), null)
+                .setPositiveButton(s("تحديث", "Refresh"), new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int w) { refreshFeeds(true); }
+                })
+                .setNegativeButton(s("إغلاق", "Close"), null)
                 .show();
     }
 

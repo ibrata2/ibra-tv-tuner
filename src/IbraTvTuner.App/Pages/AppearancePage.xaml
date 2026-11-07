@@ -58,7 +58,7 @@
                             <ComboBoxItem Content="English" Tag="en"/>
                         </ComboBox>
                         <Label Content="{Binding [LauncherTitle], Source={x:Static local:Loc.I}}"/>
-                        <TextBox x:Name="TitleBox" Text="IBRA TV" MaxLength="40" TextChanged="Any_Changed"/>
+                        <TextBox x:Name="TitleBox" Text="IBRA HOME" MaxLength="40" TextChanged="Any_Changed"/>
                         <Label Content="{Binding [Columns], Source={x:Static local:Loc.I}}"/>
                         <DockPanel>
                             <TextBlock x:Name="ColsText" DockPanel.Dock="Right" Width="24" Text="5"/>

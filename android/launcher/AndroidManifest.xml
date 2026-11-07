@@ -9,6 +9,9 @@
     <!-- A launcher must see every launchable app (Android 11+ package visibility). -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
+    <!-- Weather, football and episode cards (HTTPS GET only). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
@@ -18,6 +21,7 @@
         android:banner="@drawable/banner"
         android:supportsRtl="true"
         android:allowBackup="false"
+        android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen">
 
         <activity

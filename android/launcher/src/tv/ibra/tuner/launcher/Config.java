@@ -19,18 +19,30 @@ public final class Config {
     private static final Pattern COMPONENT = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+/[A-Za-z0-9_.$]+$");
 
     public String lang = "ar";
-    public String title = "IBRA TV";
+    public String title = "IBRA HOME";
     public int columns = 5;
-    public int bg1 = Color.parseColor("#0B1220");
-    public int bg2 = Color.parseColor("#14324A");
-    public int accent = Color.parseColor("#38BDF8");
-    public int text = Color.parseColor("#F1F5F9");
+    // IBRA black & gold
+    public int bg1 = Color.parseColor("#0A0A0A");
+    public int bg2 = Color.parseColor("#1C1608");
+    public int accent = Color.parseColor("#C9A84C");
+    public int text = Color.parseColor("#F5F0E1");
     public boolean showClock = true;
     public boolean showAllApps = true;
     public boolean largeText = true;
     public final List<String> favorites = new ArrayList<String>();
     public final List<String> hidden = new ArrayList<String>();
     public String stockHome = null;
+
+    // IBRA HOME sections
+    public boolean showWeather = true;
+    public boolean showFootball = true;
+    public boolean showShows = true;
+    public boolean showIraqiApps = true;
+    public String city = "بغداد";
+    public double lat = 33.3152;
+    public double lon = 44.3661;
+    /** Extra packages added to the Iraqi apps row (on top of the built-in list). */
+    public final List<String> extraApps = new ArrayList<String>();
 
     public boolean arabic() { return !"en".equals(lang); }
 
@@ -72,6 +84,15 @@ public final class Config {
             list(o, "hidden", c.hidden);
             String sh = o.optString("stockHome", "");
             c.stockHome = COMPONENT.matcher(sh).matches() ? sh : null;
+            c.showWeather = o.optBoolean("showWeather", true);
+            c.showFootball = o.optBoolean("showFootball", true);
+            c.showShows = o.optBoolean("showShows", true);
+            c.showIraqiApps = o.optBoolean("showIraqiApps", true);
+            String city = o.optString("city", c.city).trim();
+            if (!city.isEmpty()) c.city = city.length() > 30 ? city.substring(0, 30) : city;
+            double la = o.optDouble("lat", c.lat), lo = o.optDouble("lon", c.lon);
+            if (la >= -90 && la <= 90 && lo >= -180 && lo <= 180) { c.lat = la; c.lon = lo; }
+            list(o, "extraApps", c.extraApps);
             return c;
         } catch (Exception e) {
             return null;
@@ -94,6 +115,14 @@ public final class Config {
             o.put("favorites", new JSONArray(favorites));
             o.put("hidden", new JSONArray(hidden));
             if (stockHome != null) o.put("stockHome", stockHome);
+            o.put("showWeather", showWeather);
+            o.put("showFootball", showFootball);
+            o.put("showShows", showShows);
+            o.put("showIraqiApps", showIraqiApps);
+            o.put("city", city);
+            o.put("lat", lat);
+            o.put("lon", lon);
+            o.put("extraApps", new JSONArray(extraApps));
             return o.toString();
         } catch (Exception e) {
             return "{}";

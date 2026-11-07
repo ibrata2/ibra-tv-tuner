@@ -14,6 +14,7 @@ Customise smart-TV and TV-box home screens and manage bloat from your Windows PC
 ### شنو يسوي
 - **الأجهزة:** إضافة جهاز بالـIP والمنفذ، أو Wireless debugging (منفذ اقتران + رمز، ومنفذ اتصال منفصل)، أو USB، أو اكتشاف بالشبكة. الشاشة والبوكس جهازين مستقلين، وكل تعديل يبيّن اسم الجهاز المستهدف.
 - **المظهر:** معاينة داخل البرنامج (خلفية، مفضلة، ترتيب البلاطات، أعمدة، ألوان)، ثم: تثبيت واجهة IBRA ← إرسال الشكل ← فتحها للتجربة ← تعيينها رئيسية.
+- **واجهة IBRA HOME على التلفزيون:** بطاقات **طقس** (بغداد، 5 أيام)، **مباريات اليوم** (أبطال أوروبا، الدوريات الخمسة، الدوري الأوروبي، السعودي، كأس العالم — مباشر ونتائج بتوقيت بغداد)، و**حلقات جديدة اليوم**. صف **تطبيقات عراقية** (سينمانا، YouTube، شاهد، Netflix، Prime Video، Downloader): المثبّت يفتح، وغير المثبّت يودّيك لصفحته بالمتجر. ضغطة مطوّلة أو زر MENU على البطاقة = تحديث. المصادر: Open-Meteo وESPN وTVmaze عبر HTTPS فقط، وما يُرسل أي شي عن الجهاز. لا تحديث ذاتي ولا تنزيل APK من سيرفرات خارجية.
 - **رجوع للشكل القديم:** البرنامج يحفظ الواجهة الأصلية قبل أي تغيير، وزر واحد يرجّعها كواجهة رئيسية ويتحقق، مع خيار حذف واجهة IBRA. ويوجد كذلك «رجوع للإعدادات السابقة» للشكل، وبلاطة «الواجهة الأصلية» داخل واجهة IBRA على التلفزيون نفسه.
 - **التطبيقات:** جرد كامل (الحزمة، النوع، الحالة، نظام أو مستخدم) مع تصنيف: محمية / قابلة للمراجعة / غير معروفة، وقوائم توصيات مربوطة بالموديل. الافتراضي **تعطيل** قابل للإرجاع؛ الإزالة خيار منفصل متقدم.
 - **التغييرات والاسترجاع:** كل دفعة تُحفظ قبل التنفيذ، كل خطوة يُعاد التحقق منها من الجهاز، والاسترجاع يرجّع الحالة المسجّلة قبل التغيير.
@@ -60,7 +61,7 @@ CI (`.github/workflows/build.yml`) does all three, uploads the portable EXE and 
 |---|---|
 | `src/IbraTvTuner.Core` | ADB actions (fixed list, validated), device session, package classifier, change journal + rollback, launcher manager + Home backup/restore, discovery, timing. Platform modules decide what each OS may do. |
 | `src/IbraTvTuner.App` | WPF UI (Arabic RTL / English): Devices, Appearance, Apps, Changes & restore, Compatibility. |
-| `android/launcher` | IBRA TV launcher (Java, Android 5+): D-pad, OK, long-press/MENU options, BACK stays home, Arabic/English, large text. |
+| `android/launcher` | IBRA HOME launcher (Java, Android 5+): weather / football / today's-episodes cards (Open-Meteo, ESPN, TVmaze; cached, offline-safe), Iraqi apps row with store links for missing apps, D-pad, OK, long-press/MENU options, BACK stays home, Arabic/English. |
 | `android/testapp` | Harmless app used only by the self-test. |
 | `tests/` | Dependency-free test runner with an in-memory fake TV. |
 | `tools/build_catalog.py` | Regenerates the model recommendation catalog from CleanYourTV (MIT). |
