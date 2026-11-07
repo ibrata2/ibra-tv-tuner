@@ -26,3 +26,4 @@ home-backup/
 measurements/
 *.local.json
 platform-tools/
+android/installer/assets/

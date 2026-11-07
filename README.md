@@ -21,6 +21,17 @@ Customise smart-TV and TV-box home screens and manage bloat from your Windows PC
 - **التوافق:** مصفوفة تُرسم من الكود نفسه: مدعومة / تحتاج إعداداً / غير مدعومة / غير مختبرة.
 - **قياس:** وقت فتح الواجهة أو تطبيق (am start -W) قبل وبعد، بدون ادعاء تسريع.
 
+### مثبّت IBRA HOME من الموبايل (`ibra-home-installer.apk`)
+بدون حاسبة: نصّب التطبيق على موبايل أندرويد، وهو يحمل واجهة IBRA HOME بداخله.
+1. على التلفزيون فعّل خيارات المطوّر و«تصحيح USB» / «ADB عبر الشبكة» (الخطوات تحت، وموجودة داخل التطبيق).
+2. الموبايل والتلفزيون على نفس الواي فاي ← «ابحث بالشبكة» أو اكتب الـ IP (المنفذ 5555).
+3. «ثبّت IBRA HOME» ← اضغط **سماح** على التلفزيون (مرة وحدة) ← يثبّت، يحفظ الواجهة الأصلية، ويخلي IBRA HOME رئيسية ويتحقق.
+4. «رجّع الواجهة الأصلية» أو «رجّع الأصلية واحذف IBRA HOME» يرجّعك مثل ما كنت.
+
+خيار للأجهزة اللي ترجع للواجهة القديمة بنفسها (مثل Google TV): تعطيل الواجهة الأصلية مؤقتاً، وزر الاسترجاع يفعّلها من جديد.
+حالياً يدعم «ADB عبر الشبكة» على المنفذ 5555؛ منفذ «تصحيح الأخطاء اللاسلكي» (اقتران برمز، أندرويد 11+) غير مدعوم بعد — استعمل برنامج الحاسبة لهذا النوع.
+الاتصال محلي فقط (الموبايل ← التلفزيون)؛ ما يتصل بأي سيرفر، ومفتاح ADB يتولّد ويبقى داخل الموبايل.
+
 ### ربط التلفزيون أو البوكس عبر Wi-Fi
 1. على التلفزيون: الإعدادات ← تفضيلات الجهاز ← حول ← اضغط OK على **الإصدار/Build** 7 مرات.
 2. خيارات المطوّر ← فعّل **تصحيح USB** و/أو **ADB عبر الشبكة**.
@@ -62,6 +73,7 @@ CI (`.github/workflows/build.yml`) does all three, uploads the portable EXE and 
 | `src/IbraTvTuner.Core` | ADB actions (fixed list, validated), device session, package classifier, change journal + rollback, launcher manager + Home backup/restore, discovery, timing. Platform modules decide what each OS may do. |
 | `src/IbraTvTuner.App` | WPF UI (Arabic RTL / English): Devices, Appearance, Apps, Changes & restore, Compatibility. |
 | `android/launcher` | IBRA HOME launcher (Java, Android 5+): weather / football / today's-episodes cards (Open-Meteo, ESPN, TVmaze; cached, offline-safe), Iraqi apps row with store links for missing apps, D-pad, OK, long-press/MENU options, BACK stays home, Arabic/English. |
+| `android/installer` | IBRA HOME phone installer (Java, Android 5+): pure-Java ADB client (RSA auth, shell, sync push) over port 5555, LAN scan, install + set Home + verified restore; carries the launcher APK in its assets. `test/run.sh` runs it end-to-end against a fake TV. |
 | `android/testapp` | Harmless app used only by the self-test. |
 | `tests/` | Dependency-free test runner with an in-memory fake TV. |
 | `tools/build_catalog.py` | Regenerates the model recommendation catalog from CleanYourTV (MIT). |

@@ -31,6 +31,8 @@ jobs:
           # Use the system tools, not the runner's preinstalled SDK.
           unset ANDROID_HOME ANDROID_SDK_ROOT
           android/build.sh
+      - name: Phone installer end-to-end test (fake TV)
+        run: android/installer/test/run.sh
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
@@ -122,7 +124,7 @@ jobs:
         run: |
           cp art/IbraTvTuner-win-x64-portable/*.zip .
           cp art/apks/*.apk .
-          files="IbraTvTuner-win-x64-portable.zip ibra-tv-launcher.apk ibra-tv-testapp.apk"
+          files="IbraTvTuner-win-x64-portable.zip ibra-tv-launcher.apk ibra-home-installer.apk ibra-tv-testapp.apk"
           if gh release view v0.1.0 >/dev/null 2>&1; then
             gh release edit v0.1.0 --draft --notes-file docs/RELEASE_NOTES.md
             gh release upload v0.1.0 $files --clobber
