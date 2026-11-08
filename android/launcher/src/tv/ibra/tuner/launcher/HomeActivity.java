@@ -75,6 +75,17 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     private String moving;
 
     private BroadcastReceiver pkgReceiver;
+    private View startFocus;
+
+    /** The system gives focus to the first focusable view (the Wi-Fi icon) when the window gains focus; take it back. */
+    @Override
+    public void onWindowFocusChanged(boolean has) {
+        super.onWindowFocusChanged(has);
+        if (!has || startFocus == null) return;
+        View f = getCurrentFocus();
+        boolean stray = f == null || (f.getTag() instanceof String && ((String) f.getTag()).startsWith("top:") && !((String) f.getTag()).equals(focusTag));
+        if (stray && startFocus.isAttachedToWindow()) startFocus.requestFocus();
+    }
 
     private String s(String a, String e) { return ar ? a : e; }
     private int u(float v) { return Ui.u(this, v); }
@@ -214,6 +225,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         Apps.initFavorites(this, cfg);
         View focused = getCurrentFocus();
         if (focused != null && focused.getTag() instanceof String) focusTag = (String) focused.getTag();
+        if (focusTag != null && focusTag.startsWith("top:") && focused != null && !focused.isFocused()) focusTag = null;
 
         FrameLayout root = new FrameLayout(this);
         root.setLayoutDirection(ar ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
@@ -265,11 +277,8 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         if (target == null && favRow != null && favRow.getChildCount() > 0) target = favRow.getChildAt(0);
         if (target == null) target = root.findViewWithTag("drop");
         if (target == null) target = root.findViewWithTag("side:home");
-        final View first = target;
-        if (first != null) {
-            first.requestFocus();
-            root.post(new Runnable() { @Override public void run() { first.requestFocus(); } });   // after the first layout
-        }
+        startFocus = target;
+        if (target != null) target.requestFocus();
     }
 
     // ------------------------------------------------------------------ sidebar + top bar
