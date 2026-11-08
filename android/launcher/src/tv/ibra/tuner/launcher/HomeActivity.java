@@ -1258,6 +1258,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         f.addView(Ui.icon(this, "i_add", Ui.text(cfg), 46));
         TextView t = Ui.tv(this, cfg, s("إضافة تطبيق", "Add app"), 19, true);
         t.setPadding(0, u(6), 0, 0);
+        t.setGravity(Gravity.CENTER);
         f.addView(t);
         Ui.focusable(this, cfg, f, g, 1.09f, null);
         f.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { addDialog(null); } });

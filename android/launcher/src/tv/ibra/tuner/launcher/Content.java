@@ -152,7 +152,9 @@ public final class Content {
         }
         if (cfg.contentCats.contains("anime") && (force || stale(c, "anime"))) {
             try {
-                List<Item> a = jikan();
+                List<Item> a;
+                try { a = jikan(); }
+                catch (Exception e) { android.util.Log.w("IBRA", "jikan failed, trying AniList: " + e); a = anilist(); }
                 if (!a.isEmpty()) { store(c, "anime", a); changed.add("anime"); }
             } catch (Exception e) { android.util.Log.w("IBRA", "anime: " + e); }
         }
@@ -305,6 +307,53 @@ public final class Content {
             out.add(it);
         }
         return out;
+    }
+
+    /** Backup anime source: AniList GraphQL (no key), currently airing by popularity. */
+    static List<Item> anilist() throws Exception {
+        String q = "{\"query\":\"query{Page(perPage:25){media(type:ANIME,status:RELEASING,isAdult:false,sort:POPULARITY_DESC){id title{romaji english} coverImage{extraLarge large} bannerImage description(asHtml:false) averageScore episodes format seasonYear}}}\"}";
+        java.net.HttpURLConnection con = (java.net.HttpURLConnection) new java.net.URL("https://graphql.anilist.co").openConnection();
+        con.setConnectTimeout(8000);
+        con.setReadTimeout(15000);
+        con.setRequestMethod("POST");
+        con.setDoOutput(true);
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Accept", "application/json");
+        con.setRequestProperty("User-Agent", "IBRA-TV-HOME/1.0");
+        String body;
+        try {
+            con.getOutputStream().write(q.getBytes("UTF-8"));
+            if (con.getResponseCode() != 200) throw new Exception("HTTP " + con.getResponseCode());
+            java.io.InputStream in = con.getInputStream();
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0 && out.size() < 4 * 1024 * 1024) out.write(buf, 0, n);
+            body = out.toString("UTF-8");
+        } finally { con.disconnect(); }
+        JSONArray m = new JSONObject(body).getJSONObject("data").getJSONObject("Page").getJSONArray("media");
+        List<Item> outList = new ArrayList<Item>();
+        for (int i = 0; i < m.length(); i++) {
+            JSONObject o = m.getJSONObject(i);
+            JSONObject cover = o.optJSONObject("coverImage");
+            if (cover == null) continue;
+            Item it = new Item();
+            it.id = "anilist:" + o.optInt("id");
+            JSONObject t = o.optJSONObject("title");
+            String en = t == null ? "" : t.optString("english", "");
+            it.title = en.isEmpty() || "null".equals(en) ? (t == null ? "" : t.optString("romaji", "")) : en;
+            it.poster = cover.optString("extraLarge", cover.optString("large", ""));
+            String banner = o.optString("bannerImage", "");
+            it.backdrop = banner.isEmpty() || "null".equals(banner) ? it.poster : banner;
+            it.overview = stripHtml(o.optString("description", "")).replace("null", "");
+            it.year = o.isNull("seasonYear") ? "" : String.valueOf(o.optInt("seasonYear"));
+            it.rating = o.optInt("averageScore", 0) / 10.0;
+            it.subtitle = o.optString("format", "") + (o.optInt("episodes", 0) > 0 ? " · " + o.optInt("episodes") + " ep" : "");
+            it.isNew = true;
+            it.kind = "anime";
+            if (!it.title.isEmpty() && !it.poster.isEmpty()) outList.add(it);
+        }
+        return outList;
     }
 
     // ------------------------------------------------------------------ TMDB (optional key)

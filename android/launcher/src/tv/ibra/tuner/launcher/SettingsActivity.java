@@ -511,8 +511,8 @@ public class SettingsActivity extends Activity {
 
     private void sources() {
         Dlg.info(this, cfg, s("مصادر المحتوى", "Content sources"), s(
-                "• المسلسلات والبرامج: TVmaze (بدون مفتاح)\n• الأنمي: Jikan / MyAnimeList (بدون مفتاح)\n• الأفلام والأكثر مشاهدة: TMDB إذا ضفت مفتاح (بالعربي)، وإلا قائمة iTunes للأفلام\n• المباريات: ESPN\n• الطقس: Open-Meteo\n\nالواجهة تعرض العناوين والصور والوصف فقط. زر التشغيل يفتح تطبيق مثبّت عندك (نتفلكس، شاهد، سينمانا…) ولا يعرض روابط تشغيل غير مرخصة.\nالمحتوى يتحدث تلقائياً كل 6 ساعات ويبقى محفوظ بدون إنترنت.",
-                "• Series & TV shows: TVmaze (no key)\n• Anime: Jikan / MyAnimeList (no key)\n• Movies & trending: TMDB with your key, otherwise iTunes top movies\n• Football: ESPN\n• Weather: Open-Meteo\n\nOnly titles, posters and descriptions are shown. Play opens an app you have installed; no unlicensed streams.\nContent refreshes every 6 hours and stays available offline."));
+                "• المسلسلات والبرامج: TVmaze (بدون مفتاح)\n• الأنمي: Jikan / MyAnimeList، وإذا ما اشتغل AniList (بدون مفتاح)\n• الأفلام والأكثر مشاهدة: TMDB إذا ضفت مفتاح (بالعربي)، وإلا قائمة iTunes للأفلام\n• المباريات: ESPN\n• الطقس: Open-Meteo\n\nالواجهة تعرض العناوين والصور والوصف فقط. زر التشغيل يفتح تطبيق مثبّت عندك (نتفلكس، شاهد، سينمانا…) ولا يعرض روابط تشغيل غير مرخصة.\nالمحتوى يتحدث تلقائياً كل 6 ساعات ويبقى محفوظ بدون إنترنت.",
+                "• Series & TV shows: TVmaze (no key)\n• Anime: Jikan / MyAnimeList, AniList as backup (no key)\n• Movies & trending: TMDB with your key, otherwise iTunes top movies\n• Football: ESPN\n• Weather: Open-Meteo\n\nOnly titles, posters and descriptions are shown. Play opens an app you have installed; no unlicensed streams.\nContent refreshes every 6 hours and stays available offline."));
     }
 
     private void clearCache() {

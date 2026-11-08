@@ -70,5 +70,5 @@ SOFTWARE.
 - **Umm al-Qura month table (1440–1480 AH)** — derived from hijri-converter by Mohammed Alshehri (MIT).
 - **Icons** — Material Icons by Google (Apache License 2.0), rendered to PNG in `android/launcher/res/drawable-nodpi`.
 - **Data shown at runtime** (not bundled): Open-Meteo (weather, geocoding), TVmaze (schedule; CC BY-SA),
-  Jikan / MyAnimeList (anime), TMDB (optional, user's own key — "This product uses the TMDB API but is not endorsed or
+  Jikan / MyAnimeList and AniList (anime), TMDB (optional, user's own key — "This product uses the TMDB API but is not endorsed or
   certified by TMDB"), Apple iTunes RSS (top movies), ESPN public scoreboards.
