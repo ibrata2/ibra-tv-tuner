@@ -164,19 +164,22 @@ public final class Ui {
      * Makes a view focusable with the IBRA focus effect: accent ring, small zoom and (when effects are on) a lift.
      * {@code ring} is the drawable whose stroke is changed; may be null.
      */
+    /** View tag: when TRUE the focus ring disappears completely on blur (icons without a frame). */
+    static final int IDLE_CLEAR = 0x7f0b1b1b;
+
     public static void focusable(final Context c, final Config cfg, final View v, final GradientDrawable ring,
                                  final float zoom, final View.OnFocusChangeListener extra) {
         v.setFocusable(true);
         v.setFocusableInTouchMode(true);
         v.setClickable(true);
         final boolean fx = effects(c, cfg);
-        final int idle = ring == null ? 0 : glassStroke(cfg);
+        final int idle = ring == null || Boolean.TRUE.equals(v.getTag(IDLE_CLEAR)) ? 0 : glassStroke(cfg);
         v.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View view, boolean has) {
                 float s = has ? zoom : 1f;
                 view.animate().scaleX(s).scaleY(s).setDuration(fx ? 180 : 90).start();
                 if (fx) view.setElevation(has ? u(c, 18) : 0);
-                if (ring != null) ring.setStroke(has ? u(c, 4) : Math.max(1, u(c, 1.5f)), has ? accent(cfg) : idle);
+                if (ring != null) ring.setStroke(has ? u(c, 4) : idle == 0 ? 0 : Math.max(1, u(c, 1.5f)), has ? accent(cfg) : idle);
                 if (extra != null) extra.onFocusChange(view, has);
             }
         });

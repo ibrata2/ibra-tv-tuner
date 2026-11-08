@@ -370,6 +370,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         GradientDrawable g = Ui.pill(this, 0x00000000, 0x00000000, 18);
         f.setBackground(g);
         f.addView(Ui.icon(this, icon, Ui.text(cfg), 36), new FrameLayout.LayoutParams(u(36), u(36), Gravity.CENTER));
+        f.setTag(Ui.IDLE_CLEAR, Boolean.TRUE);
         Ui.focusable(this, cfg, f, g, 1.15f, null);
         f.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
