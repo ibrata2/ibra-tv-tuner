@@ -11,7 +11,7 @@ public sealed class LauncherConfig
 {
     public int Version { get; set; } = 1;
     public string Lang { get; set; } = "ar";
-    public string Title { get; set; } = "IBRA HOME";
+    public string Title { get; set; } = "IBRA TV HOME";
     public int Columns { get; set; } = 5;
     public string Background1 { get; set; } = "#0B1220";
     public string Background2 { get; set; } = "#14324A";

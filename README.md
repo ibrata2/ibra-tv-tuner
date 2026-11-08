@@ -14,7 +14,13 @@ Customise smart-TV and TV-box home screens and manage bloat from your Windows PC
 ### شنو يسوي
 - **الأجهزة:** إضافة جهاز بالـIP والمنفذ، أو Wireless debugging (منفذ اقتران + رمز، ومنفذ اتصال منفصل)، أو USB، أو اكتشاف بالشبكة. الشاشة والبوكس جهازين مستقلين، وكل تعديل يبيّن اسم الجهاز المستهدف.
 - **المظهر:** معاينة داخل البرنامج (خلفية، مفضلة، ترتيب البلاطات، أعمدة، ألوان)، ثم: تثبيت واجهة IBRA ← إرسال الشكل ← فتحها للتجربة ← تعيينها رئيسية.
-- **واجهة IBRA HOME على التلفزيون:** بطاقات **طقس** (بغداد، 5 أيام)، **مباريات اليوم** (أبطال أوروبا، الدوريات الخمسة، الدوري الأوروبي، السعودي، كأس العالم — مباشر ونتائج بتوقيت بغداد)، و**حلقات جديدة اليوم**. صف **تطبيقات عراقية** (سينمانا، YouTube، شاهد، Netflix، Prime Video، Downloader): المثبّت يفتح، وغير المثبّت يودّيك لصفحته بالمتجر. ضغطة مطوّلة أو زر MENU على البطاقة = تحديث. المصادر: Open-Meteo وESPN وTVmaze عبر HTTPS فقط، وما يُرسل أي شي عن الجهاز. لا تحديث ذاتي ولا تنزيل APK من سيرفرات خارجية.
+- **واجهة IBRA TV HOME على التلفزيون (1920×1080، تتكيف مع 720p و4K):** تصميم زجاجي (Glassmorphism) عربي RTL أو إنجليزي، شريط جانبي (الرئيسية، بحث، تلفزيون، كل التطبيقات، إعدادات)، ثلاث بطاقات علوية:
+  - **الساعة والطقس:** ساعة كبيرة، التاريخ الميلادي (بأسماء الأشهر العراقية) والهجري (أم القرى + تصحيح يدوي)، الحرارة والحالة، المدينة (قائمة مدن عراقية، بحث عن أي مدينة، أو موقع الجهاز)، توقعات 7 أيام.
+  - **مركز الترفيه:** قائمة منسدلة — المسلسلات الجديدة، الأفلام الجديدة، الأكثر مشاهدة، الأنمي، البرامج التلفزيونية، المفضلة، متابعة المشاهدة، مباريات اليوم. بوستر كبير + شريط بوسترات، تفاصيل وزر «شغّل عبر» يفتح تطبيق مثبّت عندك فقط (لا روابط غير مرخصة).
+  - **مواقيت الصلاة الجعفرية:** تُحسب على التلفزيون بدون إنترنت (جعفري – ليوة قم، أو جيوفيزياء طهران؛ المغرب بزاوية 4° مو الغروب)، الصلاة القادمة والوقت المتبقي، عرض الظهرين والعشاءين، ضبط الدقائق، تنبيه أو أذان (ملف adhan.mp3 تضيفه أنت).
+  - **تطبيقاتي المفضلة:** ترتيب بالريموت، مجلدات، حجم الأيقونات، ضغطة مطوّلة = خيارات، و«كل التطبيقات» بشبكة مع بحث وفرز أبجدي/آخر استخدام.
+  - **الإعدادات:** 5 ثيمات (أسود زجاجي، أبيض زجاجي، أحمر وأسود، بنفسجي سينمائي، ذهبي IBRA)، خلفية ثابتة أو متحركة، شفافية المربعات، إظهار/إخفاء وترتيب الأقسام، نسخ احتياطي واستعادة، إعادة الضبط، وضع معاينة.
+  - **الأداء:** تحميل كسول للبوسترات مع ذاكرة مؤقتة، كل شي يشتغل بدون إنترنت من آخر نسخة محفوظة، المؤثرات الثقيلة تتوقف تلقائياً على الأجهزة الضعيفة (≤1.5GB RAM).
 - **رجوع للشكل القديم:** البرنامج يحفظ الواجهة الأصلية قبل أي تغيير، وزر واحد يرجّعها كواجهة رئيسية ويتحقق، مع خيار حذف واجهة IBRA. ويوجد كذلك «رجوع للإعدادات السابقة» للشكل، وبلاطة «الواجهة الأصلية» داخل واجهة IBRA على التلفزيون نفسه.
 - **التطبيقات:** جرد كامل (الحزمة، النوع، الحالة، نظام أو مستخدم) مع تصنيف: محمية / قابلة للمراجعة / غير معروفة، وقوائم توصيات مربوطة بالموديل. الافتراضي **تعطيل** قابل للإرجاع؛ الإزالة خيار منفصل متقدم.
 - **التغييرات والاسترجاع:** كل دفعة تُحفظ قبل التنفيذ، كل خطوة يُعاد التحقق منها من الجهاز، والاسترجاع يرجّع الحالة المسجّلة قبل التغيير.
@@ -72,7 +78,7 @@ CI (`.github/workflows/build.yml`) does all three, uploads the portable EXE and 
 |---|---|
 | `src/IbraTvTuner.Core` | ADB actions (fixed list, validated), device session, package classifier, change journal + rollback, launcher manager + Home backup/restore, discovery, timing. Platform modules decide what each OS may do. |
 | `src/IbraTvTuner.App` | WPF UI (Arabic RTL / English): Devices, Appearance, Apps, Changes & restore, Compatibility. |
-| `android/launcher` | IBRA HOME launcher (Java, Android 5+): weather / football / today's-episodes cards (Open-Meteo, ESPN, TVmaze; cached, offline-safe), Iraqi apps row with store links for missing apps, D-pad, OK, long-press/MENU options, BACK stays home, Arabic/English. |
+| `android/launcher` | IBRA TV HOME launcher (Java, Android 5+, no Gradle): glass UI scaled from a 1920×1080 design, sidebar, clock/weather, entertainment centre (TVmaze, Jikan, TMDB optional, iTunes, ESPN), offline Ja'fari prayer times + Umm al-Qura Hijri, favourites with folders, all-apps grid, search, settings, backup. `test/run.sh` checks prayer times against PrayTimes.org and Hijri against Umm al-Qura; `test/screenshots.sh` runs on an Android TV emulator in CI. |
 | `android/installer` | IBRA HOME phone installer (Java, Android 5+): pure-Java ADB client (RSA auth, shell, sync push) over port 5555, LAN scan, install + set Home + verified restore; carries the launcher APK in its assets. `test/run.sh` runs it end-to-end against a fake TV. |
 | `android/testapp` | Harmless app used only by the self-test. |
 | `tests/` | Dependency-free test runner with an in-memory fake TV. |

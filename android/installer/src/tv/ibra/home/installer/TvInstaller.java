@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Installs IBRA HOME on a TV and makes it the Home app, or brings the original Home back.
+ * Installs IBRA TV HOME on a TV and makes it the Home app, or brings the original Home back.
  * Mirrors the Windows app (IBRA TV Tuner): the original Home is saved once before anything changes,
  * every step is verified on the device, and restore puts back exactly what was saved.
  * Pure Java (no Android imports) so it is testable on a desktop JVM.
@@ -127,7 +127,7 @@ public final class TvInstaller {
         String orig = backupHome();
 
         adb.push(apk, size, REMOTE_APK, 0100644, p);
-        log.step(true, "انرفعت IBRA HOME للتلفزيون");
+        log.step(true, "انرفعت IBRA TV HOME للتلفزيون");
 
         String r = adb.shell("pm install -r -d " + REMOTE_APK);
         adb.shell("rm -f " + REMOTE_APK);
@@ -135,7 +135,7 @@ public final class TvInstaller {
             log.step(false, "التثبيت فشل: " + shortErr(r));
             return false;
         }
-        log.step(true, "تثبّتت IBRA HOME");
+        log.step(true, "تثبّتت IBRA TV HOME");
 
         // Tell the launcher where the original Home is, so it shows an "original home" tile.
         // Only on a fresh install: a config broadcast replaces the launcher's saved settings.
@@ -147,11 +147,11 @@ public final class TvInstaller {
         return true;
     }
 
-    /** Makes IBRA HOME the default Home and verifies it. Returns true when verified. */
+    /** Makes IBRA TV HOME the default Home and verifies it. Returns true when verified. */
     public boolean setAsHome(boolean disableStockIfNeeded) throws IOException {
         if (sdk > 0 && sdk < 24) {
             adb.shell("am start -n " + HOME);
-            log.step(true, "انفتحت IBRA HOME. هذا الأندرويد قديم: اضغط زر Home على الريموت واختار IBRA HOME ثم «دائماً».");
+            log.step(true, "انفتحت IBRA TV HOME. هذا الأندرويد قديم: اضغط زر Home على الريموت واختار IBRA TV HOME ثم «دائماً».");
             return false;
         }
         adb.shell("cmd package set-home-activity --user 0 " + HOME);
@@ -178,8 +178,8 @@ public final class TvInstaller {
         }
         boolean ok = isOurs(currentHome());
         adb.shell("input keyevent KEYCODE_HOME");
-        if (ok) log.step(true, "صارت IBRA HOME هي الواجهة الرئيسية ✓");
-        else log.step(false, "الجهاز ما قبل يغيّر الواجهة الرئيسية. اضغط Home على الريموت واختار IBRA HOME، "
+        if (ok) log.step(true, "صارت IBRA TV HOME هي الواجهة الرئيسية ✓");
+        else log.step(false, "الجهاز ما قبل يغيّر الواجهة الرئيسية. اضغط Home على الريموت واختار IBRA TV HOME، "
                 + "أو فعّل «تعطيل الواجهة الأصلية» وأعد المحاولة.");
         return ok;
     }
@@ -211,7 +211,7 @@ public final class TvInstaller {
         }
         if (removeIbra && installed()) {
             String r = adb.shell("pm uninstall " + PKG);
-            log.step(r.contains("Success"), r.contains("Success") ? "انحذفت IBRA HOME" : "ما انحذفت: " + shortErr(r));
+            log.step(r.contains("Success"), r.contains("Success") ? "انحذفت IBRA TV HOME" : "ما انحذفت: " + shortErr(r));
         }
         String now = currentHome();
         boolean ok = sdk < 24 || (target != null ? target.equals(now) || pkgOf(target).equals(pkgOf(now)) : !isOurs(now));

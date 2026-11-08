@@ -28,8 +28,8 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
- * IBRA HOME installer (phone app). Connects to the TV over Wi-Fi with ADB (port 5555),
- * installs the IBRA HOME launcher it carries inside, makes it the Home app, and can bring the
+ * IBRA TV HOME installer (phone app). Connects to the TV over Wi-Fi with ADB (port 5555),
+ * installs the IBRA TV HOME launcher it carries inside, makes it the Home app, and can bring the
  * original Home back. Arabic, black & gold.
  */
 public class MainActivity extends Activity {
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         col.setPadding(dp(18), dp(22), dp(18), dp(28));
         scroll.addView(col);
 
-        TextView title = text("IBRA HOME", 34, true);
+        TextView title = text("IBRA TV HOME", 34, true);
         title.setTextColor(GOLD);
         title.setGravity(Gravity.CENTER);
         title.setLetterSpacing(0.1f);
@@ -124,13 +124,13 @@ public class MainActivity extends Activity {
         disableStock.setTextSize(13);
         disableStock.setChecked(prefs.getBoolean("disable_stock", false));
         c3.addView(disableStock);
-        btnInstall = button("ثبّت IBRA HOME واجعلها الرئيسية", true);
+        btnInstall = button("ثبّت IBRA TV HOME واجعلها الرئيسية", true);
         btnInstall.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { run(Action.INSTALL); } });
         c3.addView(btnInstall, lp(dp(12)));
         btnRestore = button("رجّع الواجهة الأصلية", false);
         btnRestore.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { run(Action.RESTORE); } });
         c3.addView(btnRestore, lp(dp(10)));
-        btnRemove = button("رجّع الأصلية واحذف IBRA HOME", false);
+        btnRemove = button("رجّع الأصلية واحذف IBRA TV HOME", false);
         btnRemove.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { run(Action.REMOVE); } });
         c3.addView(btnRemove, lp(dp(10)));
 
@@ -327,7 +327,7 @@ public class MainActivity extends Activity {
                     tv.probe();
 
                     if (action == Action.INSTALL) {
-                        setStatus("نرفع IBRA HOME…");
+                        setStatus("نرفع IBRA TV HOME…");
                         AssetFileDescriptor fd = null;
                         long size;
                         InputStream in;
@@ -350,7 +350,7 @@ public class MainActivity extends Activity {
                                 int last = -1;
                                 @Override public void onProgress(long s, long t) {
                                     int pct = t > 0 ? (int) (s * 100 / t) : 0;
-                                    if (pct != last) { last = pct; setStatus("نرفع IBRA HOME… " + pct + "٪"); }
+                                    if (pct != last) { last = pct; setStatus("نرفع IBRA TV HOME… " + pct + "٪"); }
                                 }
                             });
                             if (!ok) { setStatus("ما تم التثبيت ✗"); return; }

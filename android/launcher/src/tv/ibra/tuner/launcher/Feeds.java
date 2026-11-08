@@ -10,98 +10,80 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * Live info for the home screen: weather (Open-Meteo), football (ESPN public scoreboards) and
- * today's episodes (TVmaze). Raw responses are cached in their own prefs file so the home screen
- * works offline and the launcher settings listener is not triggered by refreshes.
- * Only HTTPS GETs to these three public APIs; nothing about the device is sent.
+ * Weather (Open-Meteo, no key), city search (Open-Meteo geocoding) and football (ESPN public scoreboards).
+ * Raw responses are cached in their own prefs file so the home screen works offline.
+ * Only HTTPS GETs; nothing about the device is sent.
  */
 public final class Feeds {
     static final String PREFS = "ibra_feeds";
-
     static final long WEATHER_TTL = 30 * 60 * 1000L;
     static final long FOOTBALL_TTL = 10 * 60 * 1000L;
-    static final long SHOWS_TTL = 6 * 60 * 60 * 1000L;
 
-    /** ESPN league slugs shown in the football card, in display order. */
     static final String[] LEAGUES = {
             "uefa.champions", "eng.1", "esp.1", "ita.1", "ger.1", "fra.1", "uefa.europa", "ksa.1", "fifa.world"
     };
 
-    static final TimeZone BAGHDAD = TimeZone.getTimeZone("Asia/Baghdad");
-
     // ------------------------------------------------------------------ models
 
     public static final class Weather {
-        public double temp;
-        public int code;
+        public double temp, wind;
+        public int code, humidity;
         public boolean day = true;
-        public final List<String> days = new ArrayList<String>();   // yyyy-MM-dd
+        public final List<String> days = new ArrayList<String>();
         public final List<Integer> codes = new ArrayList<Integer>();
         public final List<Double> max = new ArrayList<Double>();
         public final List<Double> min = new ArrayList<Double>();
     }
 
     public static final class Match {
-        public String league = "";
-        public String home = "";
-        public String away = "";
-        public String homeScore = "";
-        public String awayScore = "";
-        public String state = "pre";   // pre | in | post
-        public String detail = "";
+        public String league = "", home = "", away = "", homeScore = "", awayScore = "", state = "pre", detail = "";
         public Date kickoff;
     }
 
-    public static final class Episode {
-        public String show = "";
-        public String channel = "";
-        public int season;
-        public int number;
-        public double weight;
+    public static final class Place {
+        public String name, region, country, tz;
+        public double lat, lon;
     }
 
-    // ------------------------------------------------------------------ cache
+    // ------------------------------------------------------------------ cache + http
 
-    private static SharedPreferences prefs(Context c) {
-        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-    }
+    private static SharedPreferences prefs(Context c) { return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
 
     static boolean stale(Context c, String key, long ttl) {
         return System.currentTimeMillis() - prefs(c).getLong(key + "_at", 0) > ttl;
     }
 
-    static boolean has(Context c, String key) {
-        return prefs(c).contains(key);
-    }
+    static boolean has(Context c, String key) { return prefs(c).contains(key); }
 
-    private static void put(Context c, String key, String body) {
+    static void put(Context c, String key, String body) {
         prefs(c).edit().putString(key, body).putLong(key + "_at", System.currentTimeMillis()).apply();
     }
 
-    private static String get(Context c, String key) {
-        return prefs(c).getString(key, null);
-    }
+    static String get(Context c, String key) { return prefs(c).getString(key, null); }
 
-    // ------------------------------------------------------------------ network
+    static void clear(Context c) { prefs(c).edit().clear().apply(); }
 
-    static String http(String url) throws Exception {
+    static String http(String url) throws Exception { return http(url, null); }
+
+    static String http(String url, Map<String, String> headers) throws Exception {
         HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
         con.setConnectTimeout(8000);
-        con.setReadTimeout(12000);
-        con.setRequestProperty("User-Agent", "IBRA-HOME/1.0 (Android TV launcher)");
+        con.setReadTimeout(15000);
+        con.setRequestProperty("User-Agent", "IBRA-TV-HOME/1.0 (Android TV launcher)");
         con.setRequestProperty("Accept", "application/json");
+        if (headers != null) for (Map.Entry<String, String> e : headers.entrySet()) con.setRequestProperty(e.getKey(), e.getValue());
         try {
             int code = con.getResponseCode();
             if (code != 200) throw new Exception("HTTP " + code);
@@ -112,7 +94,7 @@ public final class Feeds {
             long total = 0;
             while ((n = in.read(buf)) > 0) {
                 total += n;
-                if (total > 4L * 1024 * 1024) throw new Exception("response too large");
+                if (total > 6L * 1024 * 1024) throw new Exception("response too large");
                 out.write(buf, 0, n);
             }
             return out.toString("UTF-8");
@@ -121,50 +103,57 @@ public final class Feeds {
         }
     }
 
-    static String today(String pattern) {
+    static String enc(String s) {
+        try { return URLEncoder.encode(s, "UTF-8"); } catch (Exception e) { return s; }
+    }
+
+    static String today(String pattern, TimeZone tz) {
         SimpleDateFormat f = new SimpleDateFormat(pattern, Locale.US);
-        f.setTimeZone(BAGHDAD);
+        f.setTimeZone(tz);
         return f.format(new Date());
     }
 
-    /** Refreshes whatever is stale. Call off the UI thread. Returns true if anything changed. */
-    static boolean refresh(Context c, double lat, double lon, boolean force) {
+    // ------------------------------------------------------------------ refresh
+
+    /** Refreshes stale weather/football. Off the UI thread. Returns true if anything changed. */
+    static boolean refresh(Context c, Config cfg, boolean force) {
         boolean changed = false;
-        if (force || stale(c, "weather", WEATHER_TTL)) {
+        String place = String.format(Locale.US, "%.3f,%.3f", cfg.lat, cfg.lon);
+        boolean moved = !place.equals(prefs(c).getString("weather_place", ""));
+        if (cfg.showWeather && (force || moved || stale(c, "weather", WEATHER_TTL))) {
             try {
                 String url = String.format(Locale.US,
                         "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f"
-                                + "&current=temperature_2m,weather_code,is_day"
+                                + "&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m"
                                 + "&daily=weather_code,temperature_2m_max,temperature_2m_min"
-                                + "&timezone=auto&forecast_days=5", lat, lon);
+                                + "&timezone=%s&forecast_days=7", cfg.lat, cfg.lon, enc(cfg.tz));
                 String body = http(url);
-                if (parseWeather(body) != null) { put(c, "weather", body); changed = true; }
+                if (parseWeather(body) != null) {
+                    put(c, "weather", body);
+                    prefs(c).edit().putString("weather_place", place).apply();
+                    changed = true;
+                }
             } catch (Exception ignored) { }
         }
-        if (force || stale(c, "football", FOOTBALL_TTL)) {
+        boolean wantFootball = cfg.showContent && cfg.contentCats.contains("football");
+        if (wantFootball && (force || stale(c, "football", FOOTBALL_TTL))) {
             JSONArray all = new JSONArray();
-            String date = today("yyyyMMdd");
+            String date = today("yyyyMMdd", TimeZone.getTimeZone(cfg.tz));
             for (String lg : LEAGUES) {
                 try {
-                    JSONObject o = new JSONObject(http("https://site.api.espn.com/apis/site/v2/sports/soccer/"
-                            + lg + "/scoreboard?dates=" + date));
-                    all.put(o);
+                    all.put(new JSONObject(http("https://site.api.espn.com/apis/site/v2/sports/soccer/" + lg + "/scoreboard?dates=" + date)));
                 } catch (Exception ignored) { }
             }
             if (all.length() > 0) { put(c, "football", all.toString()); changed = true; }
         }
-        if (force || stale(c, "shows", SHOWS_TTL)) {
-            try {
-                String body = http("https://api.tvmaze.com/schedule/web?date=" + today("yyyy-MM-dd"));
-                if (!parseShows(body).isEmpty()) { put(c, "shows", body); changed = true; }
-            } catch (Exception ignored) { }
-        }
         return changed;
     }
 
-    // ------------------------------------------------------------------ parsing
+    // ------------------------------------------------------------------ weather
 
-    static Weather weather(Context c) {
+    static Weather weather(Context c, Config cfg) {
+        String place = String.format(Locale.US, "%.3f,%.3f", cfg.lat, cfg.lon);
+        if (!place.equals(prefs(c).getString("weather_place", ""))) return null;   // cached data is for another city
         String b = get(c, "weather");
         return b == null ? null : parseWeather(b);
     }
@@ -177,6 +166,8 @@ public final class Feeds {
             w.temp = cur.getDouble("temperature_2m");
             w.code = cur.optInt("weather_code", 0);
             w.day = cur.optInt("is_day", 1) == 1;
+            w.humidity = cur.optInt("relative_humidity_2m", -1);
+            w.wind = cur.optDouble("wind_speed_10m", -1);
             JSONObject d = o.optJSONObject("daily");
             if (d != null) {
                 JSONArray t = d.getJSONArray("time"), wc = d.getJSONArray("weather_code"),
@@ -194,6 +185,70 @@ public final class Feeds {
         }
     }
 
+    /** City search for the settings screen. Off the UI thread. */
+    static List<Place> searchCity(String q, boolean ar) throws Exception {
+        String body = http("https://geocoding-api.open-meteo.com/v1/search?count=10&format=json&language="
+                + (ar ? "ar" : "en") + "&name=" + enc(q));
+        List<Place> out = new ArrayList<Place>();
+        JSONArray r = new JSONObject(body).optJSONArray("results");
+        if (r == null) return out;
+        for (int i = 0; i < r.length(); i++) {
+            JSONObject o = r.getJSONObject(i);
+            Place p = new Place();
+            p.name = o.optString("name", "");
+            p.region = o.optString("admin1", "");
+            p.country = o.optString("country", "");
+            p.tz = o.optString("timezone", "UTC");
+            p.lat = o.optDouble("latitude", 0);
+            p.lon = o.optDouble("longitude", 0);
+            if (!p.name.isEmpty()) out.add(p);
+        }
+        return out;
+    }
+
+    /** Iraqi cities offered without internet. {name_ar, name_en, lat, lon} */
+    static final Object[][] IRAQ = {
+            {"بغداد", "Baghdad", 33.3152, 44.3661}, {"البصرة", "Basra", 30.5085, 47.7804},
+            {"النجف", "Najaf", 32.0259, 44.3462}, {"كربلاء", "Karbala", 32.6160, 44.0249},
+            {"الموصل", "Mosul", 36.3350, 43.1189}, {"أربيل", "Erbil", 36.1911, 44.0092},
+            {"السليمانية", "Sulaymaniyah", 35.5613, 45.4374}, {"كركوك", "Kirkuk", 35.4681, 44.3922},
+            {"الحلة", "Hillah", 32.4637, 44.4199}, {"الناصرية", "Nasiriyah", 31.0439, 46.2575},
+            {"العمارة", "Amarah", 31.8356, 47.1446}, {"الكوت", "Kut", 32.5128, 45.8182},
+            {"الديوانية", "Diwaniyah", 31.9929, 44.9255}, {"السماوة", "Samawah", 31.3099, 45.2806},
+            {"بعقوبة", "Baqubah", 33.7466, 44.6437}, {"الرمادي", "Ramadi", 33.4206, 43.3078},
+            {"تكريت", "Tikrit", 34.6070, 43.6782}, {"دهوك", "Duhok", 36.8679, 42.9883},
+            {"سامراء", "Samarra", 34.1959, 43.8857}, {"الفلوجة", "Fallujah", 33.3533, 43.7829},
+    };
+
+    // ------------------------------------------------------------------ labels
+
+    static String weatherText(int code, boolean ar) {
+        if (code == 0) return ar ? "صحو" : "Clear";
+        if (code <= 2) return ar ? "غائم جزئياً" : "Partly cloudy";
+        if (code == 3) return ar ? "غائم" : "Cloudy";
+        if (code == 45 || code == 48) return ar ? "ضباب" : "Fog";
+        if (code >= 51 && code <= 57) return ar ? "رذاذ" : "Drizzle";
+        if (code >= 61 && code <= 67) return ar ? "مطر" : "Rain";
+        if (code >= 71 && code <= 77) return ar ? "ثلج" : "Snow";
+        if (code >= 80 && code <= 82) return ar ? "زخات مطر" : "Showers";
+        if (code >= 85 && code <= 86) return ar ? "زخات ثلج" : "Snow showers";
+        if (code >= 95) return ar ? "عاصفة رعدية" : "Thunderstorm";
+        return "—";
+    }
+
+    /** Icon resource name for a WMO code. */
+    static String weatherIcon(int code, boolean day) {
+        if (code == 0) return day ? "w_sun" : "w_moon";
+        if (code <= 2) return day ? "w_cloud_sun" : "w_cloud_moon";
+        if (code == 3) return "w_cloud";
+        if (code == 45 || code == 48) return "w_fog";
+        if (code >= 71 && code <= 77 || code == 85 || code == 86) return "w_snow";
+        if (code >= 95) return "w_storm";
+        return "w_rain";
+    }
+
+    // ------------------------------------------------------------------ football
+
     static List<Match> matches(Context c) {
         List<Match> out = new ArrayList<Match>();
         String b = get(c, "football");
@@ -202,7 +257,6 @@ public final class Feeds {
             JSONArray boards = new JSONArray(b);
             for (int i = 0; i < boards.length(); i++) out.addAll(parseScoreboard(boards.getJSONObject(i)));
         } catch (Exception ignored) { }
-        // live first, then upcoming by time, then finished
         Collections.sort(out, new Comparator<Match>() {
             int rank(Match m) { return "in".equals(m.state) ? 0 : "pre".equals(m.state) ? 1 : 2; }
             @Override public int compare(Match x, Match y) {
@@ -250,81 +304,21 @@ public final class Feeds {
         return out;
     }
 
-    static List<Episode> shows(Context c) {
-        String b = get(c, "shows");
-        return b == null ? new ArrayList<Episode>() : parseShows(b);
-    }
-
-    static List<Episode> parseShows(String body) {
-        List<Episode> out = new ArrayList<Episode>();
-        try {
-            JSONArray a = new JSONArray(body);
-            Set<String> seen = new HashSet<String>();
-            for (int i = 0; i < a.length(); i++) {
-                JSONObject ep = a.getJSONObject(i);
-                JSONObject emb = ep.optJSONObject("_embedded");
-                JSONObject show = emb == null ? ep.optJSONObject("show") : emb.optJSONObject("show");
-                if (show == null) continue;
-                String name = show.optString("name", "");
-                if (name.isEmpty() || !seen.add(name)) continue;
-                Episode e = new Episode();
-                e.show = name;
-                e.season = ep.optInt("season", 0);
-                e.number = ep.optInt("number", 0);
-                e.weight = show.optDouble("weight", 0);
-                JSONObject ch = show.optJSONObject("webChannel");
-                if (ch == null) ch = show.optJSONObject("network");
-                e.channel = ch == null ? "" : ch.optString("name", "");
-                out.add(e);
-            }
-        } catch (Exception ignored) { }
-        Collections.sort(out, new Comparator<Episode>() {
-            @Override public int compare(Episode x, Episode y) { return Double.compare(y.weight, x.weight); }
-        });
-        return out.size() > 20 ? new ArrayList<Episode>(out.subList(0, 20)) : out;
-    }
-
-    // ------------------------------------------------------------------ labels
-
-    /** WMO weather code → short label. */
-    static String weatherText(int code, boolean ar) {
-        if (code == 0) return ar ? "صحو" : "Clear";
-        if (code <= 2) return ar ? "غائم جزئياً" : "Partly cloudy";
-        if (code == 3) return ar ? "غائم" : "Cloudy";
-        if (code == 45 || code == 48) return ar ? "ضباب" : "Fog";
-        if (code >= 51 && code <= 57) return ar ? "رذاذ" : "Drizzle";
-        if (code >= 61 && code <= 67) return ar ? "مطر" : "Rain";
-        if (code >= 71 && code <= 77) return ar ? "ثلج" : "Snow";
-        if (code >= 80 && code <= 82) return ar ? "زخات مطر" : "Showers";
-        if (code >= 85 && code <= 86) return ar ? "زخات ثلج" : "Snow showers";
-        if (code >= 95) return ar ? "عاصفة رعدية" : "Thunderstorm";
-        return ar ? "—" : "—";
-    }
-
-    static String weatherSymbol(int code, boolean day) {
-        if (code == 0) return day ? "☀" : "☾";
-        if (code <= 2) return "⛅";
-        if (code == 3 || code == 45 || code == 48) return "☁";
-        if (code >= 71 && code <= 77 || code == 85 || code == 86) return "❄";
-        if (code >= 95) return "⚡";
-        return "☂";
-    }
-
-    static String time(Date d) {
+    static String time(Date d, TimeZone tz) {
         if (d == null) return "";
         SimpleDateFormat f = new SimpleDateFormat("HH:mm", Locale.US);
-        f.setTimeZone(BAGHDAD);
+        f.setTimeZone(tz);
         return f.format(d);
     }
 
-    static String dayName(String ymd, boolean ar) {
+    static String dayName(String ymd, boolean ar, TimeZone tz) {
         try {
             SimpleDateFormat in = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            in.setTimeZone(BAGHDAD);
-            Date d = in.parse(ymd);
-            SimpleDateFormat out = new SimpleDateFormat("EEE", ar ? new Locale("ar") : Locale.US);
-            out.setTimeZone(BAGHDAD);
-            return out.format(d);
+            in.setTimeZone(tz);
+            java.util.Calendar c = java.util.Calendar.getInstance(tz);
+            c.setTime(in.parse(ymd));
+            int dow = c.get(java.util.Calendar.DAY_OF_WEEK) - 1;
+            return ar ? Prayer.DAYS_AR[dow] : Prayer.DAYS_EN[dow].substring(0, 3);
         } catch (Exception e) {
             return ymd;
         }

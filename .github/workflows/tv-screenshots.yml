@@ -1,0 +1,51 @@
+name: tv-screenshots
+
+# Real run on an Android TV emulator: installs IBRA TV HOME, screenshots every screen with live data,
+# collects logcat/crashes and publishes them to the "screenshots" branch.
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/tv-screenshots.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build APKs (apt tools, no Gradle)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q android-sdk-platform-23 aapt dalvik-exchange zipalign apksigner openjdk-17-jdk-headless
+          env -u ANDROID_HOME -u ANDROID_SDK_ROOT android/build.sh
+      - name: Android TV emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          force-avd-creation: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: false
+          script: bash android/launcher/test/screenshots.sh
+      - name: Publish to branch "screenshots"
+        if: always()
+        run: |
+          [ -d shots ] || exit 0
+          cd shots
+          git init -q
+          git checkout -q -b screenshots
+          echo "Commit: $GITHUB_SHA" > README.md
+          git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "screenshots for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" screenshots

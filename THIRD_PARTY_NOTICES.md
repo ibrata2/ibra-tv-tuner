@@ -60,3 +60,15 @@ SOFTWARE.
   License Agreement, which does not grant redistribution. The app finds an existing `adb.exe`, lets the user
   pick one, or downloads the official zip from `dl.google.com` only after the user accepts Google's terms.
 - **.NET runtime** — included in the self-contained EXE under the MIT License (© .NET Foundation and Contributors).
+
+
+## IBRA TV HOME (android/launcher)
+
+- **Prayer times algorithm** — ported from PrayTimes.org v2.3 by Hamid Zarrabi-Zadeh (GNU LGPL v3.0, http://praytimes.org).
+  `android/launcher/src/tv/ibra/tuner/launcher/Prayer.java` keeps that licence and credit. Method parameters:
+  Ja'fari (Leva Institute, Qum) and Institute of Geophysics, University of Tehran.
+- **Umm al-Qura month table (1440–1480 AH)** — derived from hijri-converter by Mohammed Alshehri (MIT).
+- **Icons** — Material Icons by Google (Apache License 2.0), rendered to PNG in `android/launcher/res/drawable-nodpi`.
+- **Data shown at runtime** (not bundled): Open-Meteo (weather, geocoding), TVmaze (schedule; CC BY-SA),
+  Jikan / MyAnimeList (anime), TMDB (optional, user's own key — "This product uses the TMDB API but is not endorsed or
+  certified by TMDB"), Apple iTunes RSS (top movies), ESPN public scoreboards.

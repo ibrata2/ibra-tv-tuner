@@ -33,6 +33,8 @@ jobs:
           android/build.sh
       - name: Phone installer end-to-end test (fake TV)
         run: android/installer/test/run.sh
+      - name: Launcher tests (prayer times vs PrayTimes.org, Hijri vs Umm al-Qura)
+        run: android/launcher/test/run.sh
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x

@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="tv.ibra.tuner.launcher"
-    android:versionCode="1"
-    android:versionName="0.1.0">
+    android:versionCode="2"
+    android:versionName="1.0.0">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
     <!-- A launcher must see every launchable app (Android 11+ package visibility). -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-
-    <!-- Weather, football and episode cards (HTTPS GET only). -->
+    <!-- Weather, posters, football (HTTPS GET only) and the Wi-Fi/Ethernet icon. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Optional "use device location" for city; asked only when the user picks it. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Optional prayer alert survives a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- "Uninstall" in the all-apps menu (the system asks the user to confirm). -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
 
     <application
         android:label="@string/app_name"
@@ -22,6 +30,7 @@
         android:supportsRtl="true"
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
+        android:largeHeap="false"
         android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen">
 
         <activity
@@ -44,7 +53,28 @@
             </intent-filter>
         </activity>
 
-        <!-- Settings from the Windows app. Guarded by DUMP: adb shell has it, normal apps do not. -->
+        <activity android:name=".AllAppsActivity" android:exported="false" android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden|adjustNothing" />
+        <activity android:name=".SearchActivity" android:exported="false" android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateVisible|adjustNothing" />
+        <activity android:name=".SettingsActivity" android:exported="false" android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden|adjustNothing" />
+        <activity android:name=".PrayerAlertActivity" android:exported="false" android:screenOrientation="landscape"
+            android:excludeFromRecents="true" android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Material.NoActionBar.TranslucentDecor" />
+
+        <!-- Prayer alarm (explicit PendingIntent only). -->
+        <receiver android:name=".PrayerAlarm" android:exported="false" />
+        <!-- Reschedules the prayer alarm after boot / clock changes. Does nothing else. -->
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Settings from the Windows app / phone installer. Guarded by DUMP: adb shell has it, normal apps do not. -->
         <receiver
             android:name=".ConfigReceiver"
             android:exported="true"
