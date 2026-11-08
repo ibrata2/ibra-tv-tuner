@@ -123,6 +123,8 @@ public final class Ui {
         v.setTypeface(Typeface.create("sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL));
         v.setIncludeFontPadding(false);
         v.setLineSpacing(0, 1.12f);
+        // paragraph direction follows the launcher language, so Latin titles sit on the right in Arabic
+        v.setTextDirection(cfg.arabic() ? View.TEXT_DIRECTION_RTL : View.TEXT_DIRECTION_LTR);
         return v;
     }
 

@@ -148,19 +148,19 @@ public final class Content {
                 if (!r[0].isEmpty()) { store(c, "series", r[0]); changed.add("series"); }
                 if (!r[1].isEmpty()) { store(c, "tv", r[1]); changed.add("tv"); }
                 if (cfg.tmdbKey.isEmpty() && !r[2].isEmpty()) { store(c, "trending", r[2]); changed.add("trending"); }
-            } catch (Exception ignored) { }
+            } catch (Exception e) { android.util.Log.w("IBRA", "tvmaze: " + e); }
         }
         if (cfg.contentCats.contains("anime") && (force || stale(c, "anime"))) {
             try {
                 List<Item> a = jikan();
                 if (!a.isEmpty()) { store(c, "anime", a); changed.add("anime"); }
-            } catch (Exception ignored) { }
+            } catch (Exception e) { android.util.Log.w("IBRA", "anime: " + e); }
         }
         if (cfg.contentCats.contains("movies") && (force || stale(c, "movies"))) {
             try {
                 List<Item> m = cfg.tmdbKey.isEmpty() ? itunesMovies() : tmdb(cfg.tmdbKey, "/movie/now_playing", cfg.arabic());
                 if (!m.isEmpty()) { store(c, "movies", m); changed.add("movies"); }
-            } catch (Exception ignored) { }
+            } catch (Exception e) { android.util.Log.w("IBRA", "movies: " + e); }
         }
         if (wantTrending && !cfg.tmdbKey.isEmpty() && (force || stale(c, "trending"))) {
             try {
@@ -272,7 +272,14 @@ public final class Content {
     // ------------------------------------------------------------------ Jikan (anime)
 
     static List<Item> jikan() throws Exception {
-        JSONArray a = new JSONObject(Feeds.http("https://api.jikan.moe/v4/seasons/now?sfw=true&limit=25")).optJSONArray("data");
+        JSONArray a;
+        try {
+            a = new JSONObject(Feeds.http("https://api.jikan.moe/v4/seasons/now?sfw=true&limit=25")).optJSONArray("data");
+        } catch (Exception first) {
+            android.util.Log.w("IBRA", "jikan seasons/now: " + first);
+            Thread.sleep(1500);   // Jikan rate-limits bursts; one retry on a lighter endpoint
+            a = new JSONObject(Feeds.http("https://api.jikan.moe/v4/top/anime?filter=airing&sfw=true&limit=25")).optJSONArray("data");
+        }
         List<Item> out = new ArrayList<Item>();
         Set<String> seen = new HashSet<String>();
         for (int i = 0; a != null && i < a.length(); i++) {

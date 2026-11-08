@@ -210,6 +210,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     private void build() {
         cfg = Config.load(this);
         ar = cfg.arabic();
+        if (!cfg.favoritesInit) selfSaveAt = System.currentTimeMillis();
         Apps.initFavorites(this, cfg);
         View focused = getCurrentFocus();
         if (focused != null && focused.getTag() instanceof String) focusTag = (String) focused.getTag();
@@ -264,7 +265,11 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         if (target == null && favRow != null && favRow.getChildCount() > 0) target = favRow.getChildAt(0);
         if (target == null) target = root.findViewWithTag("drop");
         if (target == null) target = root.findViewWithTag("side:home");
-        if (target != null) target.requestFocus();
+        final View first = target;
+        if (first != null) {
+            first.requestFocus();
+            root.post(new Runnable() { @Override public void run() { first.requestFocus(); } });   // after the first layout
+        }
     }
 
     // ------------------------------------------------------------------ sidebar + top bar
@@ -399,7 +404,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
             if (i < cards.size() - 1) lp.setMarginEnd(u(24));
             row.addView(cards.get(i), lp);
         }
-        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, u(470));
+        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, u(505));
         rl.topMargin = u(6);
         row.setLayoutParams(rl);
         return row;
@@ -1103,7 +1108,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     }
 
     private int[] tileSize() {
-        int[][] s = {{170, 106}, {205, 128}, {245, 152}};
+        int[][] s = {{185, 115}, {232, 145}, {275, 172}};
         int[] r = s[Math.max(0, Math.min(2, cfg.iconSize))];
         return new int[]{u(r[0]), u(r[1])};
     }

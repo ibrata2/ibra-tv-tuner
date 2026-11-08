@@ -20,6 +20,7 @@ cfg() { $A shell am broadcast -n tv.ibra.tuner.launcher/.ConfigReceiver -a tv.ib
 key() { $A shell input keyevent "$@"; }
 
 shot 01-home-series 45
+shot 01b-home-later 20
 cfg '{"contentCat":"anime"}';                         shot 02-home-anime 20
 cfg '{"contentCat":"movies"}';                        shot 03-home-movies 20
 cfg '{"contentCat":"football"}';                      shot 04-home-football 15
@@ -46,6 +47,7 @@ cfg '{}' home; sleep 2
 key KEYCODE_DPAD_CENTER; shot 17-after-ok 5
 
 $A logcat -d > "$OUT/logcat.txt"
+grep -E " IBRA |FATAL" "$OUT/logcat.txt" > "$OUT/ibra-log.txt" || true
 grep -E "FATAL EXCEPTION|AndroidRuntime" -A 25 "$OUT/logcat.txt" | grep -B2 -A25 "tv.ibra" > "$OUT/crashes.txt" || true
 if [ -s "$OUT/crashes.txt" ]; then echo "CRASHES FOUND"; head -60 "$OUT/crashes.txt"; else echo "no crashes" > "$OUT/crashes.txt"; fi
 $A shell dumpsys meminfo tv.ibra.tuner.launcher | head -40 > "$OUT/meminfo.txt"
