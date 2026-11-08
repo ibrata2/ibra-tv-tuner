@@ -1,0 +1,1 @@
+  mCurrentFocus=Window{b955097 u0 tv.ibra.tuner.launcher/tv.ibra.tuner.launcher.HomeActivity}

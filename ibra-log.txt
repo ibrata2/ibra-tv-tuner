@@ -1,0 +1,2 @@
+11-08 11:05:07.232  3112  3267 W IBRA    : jikan seasons/now: java.net.ConnectException: Failed to connect to api.jikan.moe/2a01:4f9:c010:b863::1:443
+11-08 11:05:16.740  3112  3267 W IBRA    : jikan failed, trying AniList: java.net.ConnectException: Failed to connect to api.jikan.moe/2a01:4f9:c010:b863::1:443

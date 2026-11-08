@@ -1,0 +1,115 @@
+11-08 11:09:06.908   311   421 D AudioFlinger: mixer(0xed89e030) throttle end: throttle time(2)
+11-08 11:09:06.974   472  1431 I system_server: oneway function results will be dropped but finished with status OK and parcel size 4
+11-08 11:09:08.238   472  1431 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=tv.ibra.tuner.launcher/.SettingsActivity} from uid 10076
+11-08 11:09:08.240  4792  4794 I cmd     : oneway function results will be dropped but finished with status OK and parcel size 4
+11-08 11:09:08.241   472  1748 W ActivityTaskManager: Tried to set launchTime (0) < mLastActivityLaunchTime (284444)
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:08.241   472  1748 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+--
+11-08 11:09:14.583  4800  4800 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-08 11:09:14.584  4800  4800 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.profilebootclasspath"
+--
+11-08 11:09:20.243   984   984 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():2045 
+11-08 11:09:20.243   984   984 I DeviceUnlockedTag: DeviceUnlockedTag.notifyDeviceLockStatusChanged():38 Notify device unlocked.
+11-08 11:09:20.480   472  3840 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=tv.ibra.tuner.launcher/.AllAppsActivity} from uid 10076
+11-08 11:09:20.483   472  3840 W ActivityTaskManager: Tried to set launchTime (0) < mLastActivityLaunchTime (299690)
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:20.483   472  3840 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+--
+11-08 11:09:26.821  4857  4857 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-08 11:09:26.822  4857  4857 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.profilebootclasspath"
+11-08 11:09:26.822  4857  4857 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_apex_image"
+11-08 11:09:26.822  4857  4857 I AndroidRuntime: Using default boot image
+11-08 11:09:26.822  4857  4857 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.disable_lock_profiling"
+11-08 11:09:26.822  4857  4857 I AndroidRuntime: Leaving lock profiling enabled
+11-08 11:09:26.822  4857  4857 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_generational_cc"
+11-08 11:09:26.823  4857  4857 W app_process: Could not reserve sentinel fault page
+11-08 11:09:26.816  4857  4857 W app_process: type=1400 audit(0.0:96): avc: denied { read } for name="u:object_r:device_config_runtime_native_boot_prop:s0" dev="tmpfs" ino=286 scontext=u:r:shell:s0 tcontext=u:object_r:device_config_runtime_native_boot_prop:s0 tclass=file permissive=0
+11-08 11:09:26.816  4857  4857 I chatty  : uid=2000(shell) app_process identical 2 lines
+11-08 11:09:26.816  4857  4857 W app_process: type=1400 audit(0.0:99): avc: denied { read } for name="u:object_r:device_config_runtime_native_boot_prop:s0" dev="tmpfs" ino=286 scontext=u:r:shell:s0 tcontext=u:object_r:device_config_runtime_native_boot_prop:s0 tclass=file permissive=0
+11-08 11:09:26.857  4857  4857 D app_process: Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+11-08 11:09:26.857  4857  4857 D app_process: I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt66l.dat
+11-08 11:09:26.859  4857  4857 W app_process: Unexpected CPU variant for X86 using defaults: x86
+11-08 11:09:26.860  4857  4857 I app_process: The ClassLoaderContext is a special shared library.
+11-08 11:09:26.866  4857  4857 W app_process: JNI RegisterNativeMethods: attempt to register 0 native methods for android.media.AudioAttributes
+--
+11-08 11:09:27.154   472   481 I system_server: NativeAlloc concurrent copying GC freed 109276(5602KB) AllocSpace objects, 20(848KB) LOS objects, 49% free, 10MB/21MB, paused 22us total 245.564ms
+11-08 11:09:27.166   472   483 W System  : A resource failed to call release. 
+11-08 11:09:27.341   472  3840 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=tv.ibra.tuner.launcher/.SearchActivity} from uid 10076
+11-08 11:09:27.343   472  1748 W ActivityTaskManager: Tried to set launchTime (0) < mLastActivityLaunchTime (311932)
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_11 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_5 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_6 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_3 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_2 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_8 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_10 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_9 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_7 is associated with display ADISPLAY_ID_NONE.
+11-08 11:09:27.343   472  1748 W InputReader: Device virtio_input_multi_touch_4 is associated with display ADISPLAY_ID_NONE.
+--
+11-08 11:09:33.700  4906  4906 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-08 11:09:33.701  4906  4906 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.profilebootclasspath"
+11-08 11:09:33.701  4906  4906 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_apex_image"
+11-08 11:09:33.701  4906  4906 I AndroidRuntime: Using default boot image
+11-08 11:09:33.701  4906  4906 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.disable_lock_profiling"
+11-08 11:09:33.701  4906  4906 I AndroidRuntime: Leaving lock profiling enabled
+11-08 11:09:33.701  4906  4906 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_generational_cc"
+11-08 11:09:33.696  4906  4906 W app_process: type=1400 audit(0.0:100): avc: denied { read } for name="u:object_r:device_config_runtime_native_boot_prop:s0" dev="tmpfs" ino=286 scontext=u:r:shell:s0 tcontext=u:object_r:device_config_runtime_native_boot_prop:s0 tclass=file permissive=0
+--
+11-08 11:09:39.506   984   984 I DeviceUnlockedTag: DeviceUnlockedTag.notifyDeviceLockStatusChanged():38 Notify device unlocked.
+11-08 11:09:39.509   984  4885 I DlamWrapper: DlamWrapper$1.onSuccess():148 close(): Successfully wrote DLAM properties file.
+11-08 11:09:39.773   472   498 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=tv.ibra.tuner.launcher/.HomeActivity} from uid 10076
+11-08 11:09:39.833   984   984 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():3466 
+11-08 11:09:39.833   984   984 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():2045 
+11-08 11:09:39.866   984   984 I DeviceUnlockedTag: DeviceUnlockedTag.notifyDeviceLockStatusChanged():38 Notify device unlocked.
+11-08 11:09:39.867  4958  4960 I cmd     : oneway function results will be dropped but finished with status OK and parcel size 4
+11-08 11:09:39.955  3112  3122 I .tuner.launche: Background young concurrent copying GC freed 16105(829KB) AllocSpace objects, 0(0B) LOS objects, 0% free, 11MB/11MB, paused 117us total 148.756ms
+11-08 11:09:40.862   156   156 E SELinux : avc:  denied  { find } for interface=android.hardware.memtrack::IMemtrack sid=u:r:gmscore_app:s0:c512,c768 pid=1893 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:hal_memtrack_hwservice:s0 tclass=hwservice_manager permissive=0
+11-08 11:09:40.862  1893  4962 E memtrack: Couldn't load memtrack module
+11-08 11:09:41.926  4963  4963 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-08 11:09:41.927  4963  4963 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.profilebootclasspath"
+11-08 11:09:41.927  4963  4963 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_apex_image"
+11-08 11:09:41.927  4963  4963 I AndroidRuntime: Using default boot image
+11-08 11:09:41.927  4963  4963 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.disable_lock_profiling"
+11-08 11:09:41.927  4963  4963 I AndroidRuntime: Leaving lock profiling enabled
+11-08 11:09:41.928  4963  4963 E libc    : Access denied finding property "persist.device_config.runtime_native_boot.enable_generational_cc"
+11-08 11:09:41.930  4963  4963 W app_process: Could not reserve sentinel fault page
+11-08 11:09:41.924  4963  4963 W app_process: type=1400 audit(0.0:112): avc: denied { read } for name="u:object_r:device_config_runtime_native_boot_prop:s0" dev="tmpfs" ino=286 scontext=u:r:shell:s0 tcontext=u:object_r:device_config_runtime_native_boot_prop:s0 tclass=file permissive=0
+11-08 11:09:41.924  4963  4963 I chatty  : uid=2000(shell) app_process identical 2 lines
+11-08 11:09:41.924  4963  4963 W app_process: type=1400 audit(0.0:115): avc: denied { read } for name="u:object_r:device_config_runtime_native_boot_prop:s0" dev="tmpfs" ino=286 scontext=u:r:shell:s0 tcontext=u:object_r:device_config_runtime_native_boot_prop:s0 tclass=file permissive=0
+11-08 11:09:41.968  4963  4963 D app_process: Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+11-08 11:09:41.968  4963  4963 D app_process: I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt66l.dat
+11-08 11:09:41.971  4963  4963 W app_process: Unexpected CPU variant for X86 using defaults: x86
+11-08 11:09:41.971  4963  4963 I app_process: The ClassLoaderContext is a special shared library.
+11-08 11:09:41.978  4963  4963 W app_process: JNI RegisterNativeMethods: attempt to register 0 native methods for android.media.AudioAttributes
+11-08 11:09:41.980  4963  4963 D AndroidRuntime: Calling main entry com.android.commands.input.Input
+11-08 11:09:41.982   472  3478 I ActivityTaskManager: START u0 {act=android.settings.WIFI_SETTINGS flg=0x10000000 cmp=com.android.tv.settings/.connectivity.NetworkActivity} from uid 10076
