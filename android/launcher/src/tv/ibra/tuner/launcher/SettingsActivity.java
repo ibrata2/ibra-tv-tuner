@@ -76,6 +76,7 @@ public class SettingsActivity extends Activity {
     private void build() {
         cfg = Config.load(this);
         ar = cfg.arabic();
+        Ui.apply(cfg);
         FrameLayout root = new FrameLayout(this);
         root.setLayoutDirection(ar ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
         root.addView(new Ui.Background(this, cfg), Dlg.match());
@@ -97,6 +98,15 @@ public class SettingsActivity extends Activity {
 
         String[] themes = themeNames();
         int ti = Arrays.asList(Config.THEMES).indexOf(cfg.theme);
+
+        section(s("الستايل والشكل", "Style & shape"));
+        row("preset", "i_star", s("ستايل جاهز", "Ready-made style"), presetName(cfg.preset), new Runnable() { public void run() { preset(); } });
+        row("layout", "i_home", s("تخطيط الواجهة", "Layout"), opt(Config.LAYOUTS, layoutNames(), cfg.layout), new Runnable() { public void run() { pickOpt("layout"); } });
+        row("corners", "i_apps", s("شكل الحواف", "Corners"), opt(Config.CORNERS, cornerNames(), cfg.corners), new Runnable() { public void run() { pickOpt("corners"); } });
+        row("surface", "i_tv", s("شكل المربعات", "Card surface"), opt(Config.SURFACES, surfaceNames(), cfg.surface), new Runnable() { public void run() { pickOpt("surface"); } });
+        row("focus", "i_check", s("شكل التحديد بالريموت", "Focus style"), opt(Config.FOCUS, focusNames(), cfg.focusStyle), new Runnable() { public void run() { pickOpt("focus"); } });
+        row("iconStyle", "i_apps", s("شكل أيقونات التطبيقات", "App icon style"), opt(Config.ICONS, iconNames(), cfg.iconStyle), new Runnable() { public void run() { pickOpt("icons"); } });
+        row("font", "i_edit", s("الخط", "Font"), opt(Config.FONTS, fontNames(), cfg.font), new Runnable() { public void run() { pickOpt("font"); } });
 
         section(s("المظهر", "Look"));
         row("theme", "i_edit", s("الثيم", "Theme"), ti >= 0 ? themes[ti] : s("ألوان من الحاسبة", "Colours from PC"), new Runnable() { public void run() { theme(); } });
@@ -134,6 +144,13 @@ public class SettingsActivity extends Activity {
                 new Runnable() { public void run() { cfg.previewMode = !cfg.previewMode; changed(); } });
         row("cache", "i_delete", s("مسح الصور والمحتوى المؤقت", "Clear cached posters & content"), "", new Runnable() { public void run() { clearCache(); } });
 
+        section(s("التحديثات", "Updates"));
+        row("updmode", "i_refresh", s("التحديث التلقائي", "Automatic updates"), updName(cfg.updateMode), new Runnable() { public void run() { updMode(); } });
+        row("updnow", "i_down", s("ابحث عن تحديث الآن", "Check for updates now"),
+                s("الإصدار الحالي ", "current ") + tv.ibra.common.Updater.myVersionName(this)
+                        + (tv.ibra.common.Updater.available(this) ? s(" · متوفر ", " · available ") + tv.ibra.common.Updater.availableName(this) : ""),
+                new Runnable() { public void run() { checkNow(); } });
+
         section(s("النظام", "System"));
         row("home", "i_home", s("تعيين كواجهة رئيسية", "Set as Home app"), "", new Runnable() { public void run() { homeGuide(); } });
         row("backup", "i_down", s("حفظ نسخة احتياطية", "Save a backup"), "", new Runnable() { public void run() { backup(); } });
@@ -169,7 +186,9 @@ public class SettingsActivity extends Activity {
 
     private String[] themeNames() {
         return new String[]{s("أسود زجاجي", "Black glass"), s("أبيض زجاجي", "White glass"), s("أحمر وأسود", "Red & black"),
-                s("بنفسجي سينمائي", "Cinema purple"), s("ذهبي IBRA", "IBRA gold")};
+                s("بنفسجي سينمائي", "Cinema purple"), s("ذهبي IBRA", "IBRA gold"), s("أزرق محيطي", "Ocean blue"),
+                s("أخضر زمردي", "Emerald green"), s("وردي", "Rose"), s("برتقالي غروب", "Sunset orange"),
+                s("أسود نقي (AMOLED)", "Pure black (AMOLED)"), s("رمادي هادئ", "Calm slate"), s("بيج فاتح", "Light cream")};
     }
 
     private String bgName(String b) {
@@ -233,12 +252,137 @@ public class SettingsActivity extends Activity {
         try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return ""; }
     }
 
+    // ------------------------------------------------------------------ style
+
+    private String[] presetNames() {
+        return new String[]{s("IBRA الزجاجي", "IBRA glass"), s("سينما الليل", "Night cinema"), s("ذهبي فاخر", "Luxury gold"),
+                s("بسيط وواضح (للكبار)", "Simple & clear (seniors)"), s("مترو ملوّن", "Colourful metro"), s("نيون ألعاب", "Gaming neon"),
+                s("أبيض هادئ", "Calm white"), s("محيط", "Ocean"), s("زمردي", "Emerald"), s("غروب", "Sunset"),
+                s("وردي ناعم", "Soft rose"), s("ورقي فاتح", "Light paper")};
+    }
+
+    private String[] presetHints() {
+        return new String[]{s("كلاسيكي · زجاج · أسود", "classic · glass · black"), s("سينمائي · خلفية الفلم كاملة", "cinema · full-screen backdrop"),
+                s("حدود ذهبية · أيقونات دائرية · خط ريم كوفي", "gold outlines · round icons · Reem Kufi"),
+                s("ساعة كبيرة · أيقونات كبيرة · بدون زحمة", "huge clock · big icons · no clutter"), s("بلاطات حادة بألوان التطبيقات", "sharp tiles in app colours"),
+                s("حواف حادة · توهج · خلفية متحركة", "sharp · glow · animated"), s("فاتح · زجاج · دائري", "light · glass · round"),
+                s("سينمائي · كبسولات · أزرق", "cinema · capsules · blue"), s("بسيط · أخضر · توهج", "minimal · green · glow"),
+                s("كبسولات صلبة · برتقالي", "solid capsules · orange"), s("سينمائي · وردي", "cinema · pink"), s("بسيط · فاتح دافئ", "minimal · warm light")};
+    }
+
+    private String presetName(String id) {
+        for (int i = 0; i < Config.PRESETS.length; i++) if (Config.PRESETS[i][0].equals(id)) return presetNames()[i];
+        return s("مخصّص", "Custom");
+    }
+
+    private void preset() {
+        int sel = -1;
+        for (int i = 0; i < Config.PRESETS.length; i++) if (Config.PRESETS[i][0].equals(cfg.preset)) sel = i;
+        Dlg.choose(this, cfg, s("اختار ستايل جاهز (يغيّر الشكل فقط، المفضلة والمدينة والصلاة تبقى)", "Pick a ready-made style (look only; favourites, city and prayer stay)"),
+                presetNames(), null, presetHints(), sel, new Dlg.Pick() {
+                    public void on(int i) { cfg.applyPreset(Config.PRESETS[i]); changed(); }
+                });
+    }
+
+    private String[] layoutNames() { return new String[]{s("كلاسيكي — ثلاث بطاقات", "Classic — three cards"), s("سينمائي — خلفية الفلم كاملة", "Cinema — full-screen backdrop"), s("بسيط — ساعة كبيرة وتطبيقات", "Minimal — big clock & apps")}; }
+    private String[] cornerNames() { return new String[]{s("دائرية", "Round"), s("ناعمة", "Soft"), s("حادة", "Sharp"), s("كبسولة", "Capsule")}; }
+    private String[] surfaceNames() { return new String[]{s("زجاج شفاف", "Glass"), s("صلبة", "Solid"), s("حدود ملوّنة (نيون)", "Outline (neon)"), s("بدون خلفية", "Clear")}; }
+    private String[] focusNames() { return new String[]{s("تكبير + إطار", "Zoom + ring"), s("توهج", "Glow"), s("إطار فقط", "Ring only"), s("رفع وظل", "Lift & shadow")}; }
+    private String[] iconNames() { return new String[]{s("بانر التلفزيون", "TV banner"), s("أيقونة دائرية", "Round icon"), s("أيقونة مربعة مع الاسم", "Square icon + name"), s("ملوّنة بلون التطبيق", "Coloured by the app")}; }
+    private String[] fontNames() { return new String[]{s("خط النظام", "System font"), "Cairo — القاهرة", "Tajawal — تجوال", "Almarai — المراعي", "Reem Kufi — ريم كوفي"}; }
+
+    private String opt(String[] keys, String[] names, String v) {
+        int i = Arrays.asList(keys).indexOf(v);
+        return i >= 0 ? names[i] : v;
+    }
+
+    private void pickOpt(final String what) {
+        final String[] keys; String[] names; String cur; String title;
+        if ("layout".equals(what)) { keys = Config.LAYOUTS; names = layoutNames(); cur = cfg.layout; title = s("تخطيط الواجهة", "Layout"); }
+        else if ("corners".equals(what)) { keys = Config.CORNERS; names = cornerNames(); cur = cfg.corners; title = s("شكل الحواف", "Corners"); }
+        else if ("surface".equals(what)) { keys = Config.SURFACES; names = surfaceNames(); cur = cfg.surface; title = s("شكل المربعات", "Card surface"); }
+        else if ("focus".equals(what)) { keys = Config.FOCUS; names = focusNames(); cur = cfg.focusStyle; title = s("شكل التحديد", "Focus style"); }
+        else if ("icons".equals(what)) { keys = Config.ICONS; names = iconNames(); cur = cfg.iconStyle; title = s("شكل الأيقونات", "Icon style"); }
+        else { keys = Config.FONTS; names = fontNames(); cur = cfg.font; title = s("الخط", "Font"); }
+        Dlg.choose(this, cfg, title, names, null, null, Arrays.asList(keys).indexOf(cur), new Dlg.Pick() {
+            public void on(int i) {
+                String v = keys[i];
+                if ("layout".equals(what)) cfg.layout = v;
+                else if ("corners".equals(what)) cfg.corners = v;
+                else if ("surface".equals(what)) cfg.surface = v;
+                else if ("focus".equals(what)) cfg.focusStyle = v;
+                else if ("icons".equals(what)) cfg.iconStyle = v;
+                else cfg.font = v;
+                cfg.preset = "custom";
+                changed();
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------ updates
+
+    private String updName(String m) {
+        return "notify".equals(m) ? s("تنبيه فقط", "Notify only") : "off".equals(m) ? s("إيقاف", "Off") : s("تلقائي (ينزل ويسألك)", "Automatic (downloads, then asks)");
+    }
+
+    private void updMode() {
+        final String[] keys = {"auto", "notify", "off"};
+        Dlg.choose(this, cfg, s("التحديث التلقائي", "Automatic updates"), new String[]{updName("auto"), updName("notify"), updName("off")}, null, null,
+                Arrays.asList(keys).indexOf(cfg.updateMode), new Dlg.Pick() { public void on(int i) { cfg.updateMode = keys[i]; changed(); } });
+    }
+
+    private void checkNow() {
+        Toast.makeText(this, s("نبحث عن تحديث…", "Checking…"), Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            public void run() {
+                tv.ibra.common.Updater.Info info = null;
+                String err = null;
+                try { info = tv.ibra.common.Updater.check(getApplicationContext(), "launcher"); } catch (Exception e) { err = e.getMessage(); }
+                final tv.ibra.common.Updater.Info i = info;
+                final String er = err;
+                h.post(new Runnable() {
+                    public void run() {
+                        if (er != null) { Dlg.info(SettingsActivity.this, cfg, s("التحديثات", "Updates"), s("ما گدرت أوصل لسيرفر التحديث: ", "Could not reach the update server: ") + er); return; }
+                        if (i == null) { Dlg.info(SettingsActivity.this, cfg, s("التحديثات", "Updates"), s("عندك آخر نسخة ✓ ", "You have the latest version ✓ ") + tv.ibra.common.Updater.myVersionName(SettingsActivity.this)); changed(); return; }
+                        if (!i.sameKey) {
+                            Dlg.info(SettingsActivity.this, cfg, s("تحديث متوفر: ", "Update available: ") + i.versionName,
+                                    s("النسخة الجديدة موقّعة بمفتاح جديد، تحتاج تثبيت يدوي مرة وحدة (مثبّت الموبايل أو برنامج الحاسبة).\n", "The new version is signed with a new key; reinstall it once with the phone installer or the PC app.\n") + tv.ibra.common.Updater.RELEASES);
+                            return;
+                        }
+                        final tv.ibra.common.Updater.Info ii = i;
+                        Dlg.choose(SettingsActivity.this, cfg, s("تحديث متوفر: ", "Update available: ") + i.versionName + "\n" + (ar ? i.notesAr : i.notesEn),
+                                new String[]{s("تحديث الآن", "Update now"), s("لاحقاً", "Later")}, new String[]{"i_down", "i_history"}, null, 0, new Dlg.Pick() {
+                                    public void on(int k) { if (k == 0) install(ii); }
+                                });
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void install(final tv.ibra.common.Updater.Info i) {
+        if (!tv.ibra.common.Updater.canInstall(this)) {
+            Toast.makeText(this, s("اسمح لـ IBRA TV HOME بتثبيت التطبيقات، ثم ارجع واضغط تحديث.", "Allow IBRA TV HOME to install apps, then come back."), Toast.LENGTH_LONG).show();
+            tv.ibra.common.Updater.openInstallPermission(this);
+            return;
+        }
+        Toast.makeText(this, s("ينزل التحديث…", "Downloading…"), Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            public void run() {
+                try { tv.ibra.common.Updater.install(getApplicationContext(), tv.ibra.common.Updater.download(getApplicationContext(), i, null)); }
+                catch (final Exception e) {
+                    h.post(new Runnable() { public void run() { Toast.makeText(SettingsActivity.this, s("فشل التحديث: ", "Update failed: ") + e.getMessage(), Toast.LENGTH_LONG).show(); } });
+                }
+            }
+        }).start();
+    }
+
     // ------------------------------------------------------------------ look
 
     private void theme() {
         int ti = Arrays.asList(Config.THEMES).indexOf(cfg.theme);
         Dlg.choose(this, cfg, s("الثيم", "Theme"), themeNames(), null, null, ti, new Dlg.Pick() {
-            public void on(int i) { cfg.theme = Config.THEMES[i]; changed(); }
+            public void on(int i) { cfg.theme = Config.THEMES[i]; cfg.preset = "custom"; changed(); }
         });
     }
 
@@ -607,6 +751,7 @@ public class SettingsActivity extends Activity {
                         Config d = new Config();
                         cfg.theme = d.theme; cfg.background = d.background; cfg.cardAlpha = d.cardAlpha; cfg.iconSize = d.iconSize;
                         cfg.columns = d.columns; cfg.effects = d.effects; cfg.largeText = d.largeText; cfg.title = d.title;
+                        cfg.applyPreset(Config.PRESETS[0]);
                         cfg.showClock = cfg.showWeather = cfg.showContent = cfg.showPrayer = cfg.showFavorites = cfg.showAllApps = true;
                         cfg.cardsOrder.clear(); cfg.cardsOrder.addAll(d.cardsOrder);
                         cfg.sectionsOrder.clear(); cfg.sectionsOrder.addAll(d.sectionsOrder);

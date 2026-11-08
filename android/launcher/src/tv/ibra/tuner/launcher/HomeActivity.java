@@ -129,6 +129,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         h.postDelayed(rotate, 9000);
         refresh(false);
         PrayerAlarm.schedule(this);
+        maybeUpdate();
     }
 
     @Override
@@ -178,7 +179,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     private final Runnable rotate = new Runnable() {
         @Override public void run() {
             View f = getCurrentFocus();
-            boolean busy = f != null && f.getTag() instanceof String && (((String) f.getTag()).startsWith("poster:") || "hero".equals(f.getTag()));
+            boolean busy = f != null && f.getTag() instanceof String && (((String) f.getTag()).startsWith("poster:") || "hero".equals(f.getTag()) || "herofav".equals(f.getTag()));
             int n = Math.min(5, items.size());
             if (!busy && n > 1 && heroImg != null) {
                 heroIndex = (heroIndex + 1) % n;
@@ -198,7 +199,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
                 List<String> cats = new ArrayList<String>();
                 try {
                     feeds = Feeds.refresh(getApplicationContext(), c, force);
-                    cats = Content.refresh(getApplicationContext(), c, force);
+                    if (!"minimal".equals(c.layout)) cats = Content.refresh(getApplicationContext(), c, force);
                 } catch (Throwable ignored) {
                 } finally { refreshing.set(false); }
                 final boolean f = feeds;
@@ -218,9 +219,16 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
 
     // ================================================================== build
 
+    private boolean cinema, minimal;
+    private TextView heroOverview;
+
     private void build() {
         cfg = Config.load(this);
         ar = cfg.arabic();
+        Ui.apply(cfg);
+        tv.ibra.common.Updater.setLanguage(this, ar);
+        cinema = "cinema".equals(cfg.layout);
+        minimal = "minimal".equals(cfg.layout);
         if (!cfg.favoritesInit) selfSaveAt = System.currentTimeMillis();
         Apps.initFavorites(this, cfg);
         View focused = getCurrentFocus();
@@ -232,6 +240,9 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         if (bg != null) bg.stop();
         bg = new Ui.Background(this, cfg);
         root.addView(bg, Dlg.match());
+        favRow = null; prayerRows = null; contentBody = null; clockV = null; tempV = null; nextNameV = null;
+        heroImg = null; heroOverview = null; heroTitle = null; dots = null; wIconV = null;
+        if (cinema) cinemaBackdrop(root);
 
         LinearLayout frame = new LinearLayout(this);
         frame.setOrientation(LinearLayout.HORIZONTAL);
@@ -243,27 +254,26 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         main.setClipChildren(false);
         main.setClipToPadding(false);
         main.setPadding(u(36), u(26), u(36), u(26));
-        View side = sidebar();
+        View side = minimal ? null : sidebar();
         // the sidebar sits on the left in both languages
-        if (ar) { frame.addView(main, new LinearLayout.LayoutParams(0, -1, 1)); frame.addView(side); }
-        else { frame.addView(side); frame.addView(main, new LinearLayout.LayoutParams(0, -1, 1)); }
+        if (ar) { frame.addView(main, new LinearLayout.LayoutParams(0, -1, 1)); if (side != null) frame.addView(side); }
+        else { if (side != null) frame.addView(side); frame.addView(main, new LinearLayout.LayoutParams(0, -1, 1)); }
 
         main.addView(topBar());
-        favRow = null;
-        prayerRows = null;
-        contentBody = null;
-        clockV = null;
-        tempV = null;
-        for (String sec : cfg.sectionsOrder) {
-            if ("cards".equals(sec)) {
-                View row = cardsRow();
-                if (row != null) main.addView(row);
-            } else if ("favorites".equals(sec) && cfg.showFavorites) {
-                main.addView(favoritesSection());
+        if (cinema) buildCinema(main);
+        else if (minimal) buildMinimal(main);
+        else {
+            for (String sec : cfg.sectionsOrder) {
+                if ("cards".equals(sec)) {
+                    View row = cardsRow();
+                    if (row != null) main.addView(row);
+                } else if ("favorites".equals(sec) && cfg.showFavorites) {
+                    main.addView(favoritesSection());
+                }
             }
+            main.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+            if (cfg.showAllApps) main.addView(allAppsButton());
         }
-        main.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
-        if (cfg.showAllApps) main.addView(allAppsButton());
 
         setContentView(root);
         bg.start();
@@ -279,6 +289,288 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         if (target == null) target = root.findViewWithTag("side:home");
         startFocus = target;
         if (target != null) target.requestFocus();
+        updateBadge();
+    }
+
+    // ================================================================== cinema + minimal layouts
+
+    /** Full-screen backdrop of the current title, faded into the theme background. */
+    private void cinemaBackdrop(FrameLayout root) {
+        heroImg = new ImageView(this);
+        heroImg.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        heroImg.setAlpha(cfg.light() ? 0.55f : 0.85f);
+        root.addView(heroImg, Dlg.match());
+        int[] p = cfg.palette();
+        View side = new View(this);
+        side.setBackground(new GradientDrawable(ar ? GradientDrawable.Orientation.RIGHT_LEFT : GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{Ui.alpha(p[0], 0.96f), Ui.alpha(p[0], 0.70f), Ui.alpha(p[0], 0.15f)}));
+        root.addView(side, Dlg.match());
+        View bottom = new View(this);
+        bottom.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{Ui.alpha(p[0], 0.0f), Ui.alpha(p[0], 0.55f), Ui.alpha(p[0], 0.97f)}));
+        root.addView(bottom, Dlg.match());
+    }
+
+    private void buildCinema(LinearLayout main) {
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL);
+        top.setClipChildren(false);
+
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setClipChildren(false);
+        info.setPadding(u(10), u(6), u(10), 0);
+        if (cfg.showContent) {
+            LinearLayout drop = dropButton();
+            info.addView(drop, new LinearLayout.LayoutParams(-2, u(60)));
+            heroTitle = Ui.tv(this, cfg, "", 66, true);
+            heroTitle.setMaxLines(2);
+            heroTitle.setEllipsize(TextUtils.TruncateAt.END);
+            heroTitle.setShadowLayer(10, 0, 3, 0x99000000);
+            heroTitle.setPadding(0, u(26), 0, u(6));
+            info.addView(heroTitle);
+            heroSub = Ui.tv(this, cfg, "", 23, false);
+            heroSub.setTextColor(Ui.muted(cfg));
+            heroSub.setSingleLine(true);
+            info.addView(heroSub);
+            heroOverview = Ui.tv(this, cfg, "", 23, false);
+            heroOverview.setMaxLines(3);
+            heroOverview.setEllipsize(TextUtils.TruncateAt.END);
+            heroOverview.setLineSpacing(0, 1.3f);
+            heroOverview.setPadding(0, u(14), 0, u(18));
+            info.addView(heroOverview, new LinearLayout.LayoutParams(u(860), -2));
+            LinearLayout btns = new LinearLayout(this);
+            btns.setOrientation(LinearLayout.HORIZONTAL);
+            btns.setClipChildren(false);
+            LinearLayout play = Ui.iconText(this, cfg, "i_play", s("عرض الآن", "Watch now"), 25, 32, Color.WHITE);
+            play.setTag("hero");
+            play.setPadding(u(30), u(12), u(34), u(12));
+            GradientDrawable pg = Ui.pill(this, Ui.accent(cfg), 0, 30);
+            play.setBackground(pg);
+            Ui.focusable(this, cfg, play, pg, 1.07f, null);
+            play.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { if (heroItem != null) details(heroItem); } });
+            btns.addView(play);
+            LinearLayout fav = Ui.iconText(this, cfg, "i_star", s("المفضلة", "Favourite"), 23, 30, Ui.text(cfg));
+            fav.setTag("herofav");
+            fav.setPadding(u(26), u(12), u(30), u(12));
+            GradientDrawable fg = Ui.pill(this, Ui.glassFill(cfg), Ui.glassStroke(cfg), 30);
+            fav.setBackground(fg);
+            Ui.focusable(this, cfg, fav, fg, 1.07f, null);
+            fav.setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) { if (heroItem != null) toggleFav(heroItem); } });
+            LinearLayout.LayoutParams fl = new LinearLayout.LayoutParams(-2, -2);
+            fl.setMarginStart(u(16));
+            btns.addView(fav, fl);
+            info.addView(btns);
+            dots = new LinearLayout(this);
+            dots.setOrientation(LinearLayout.HORIZONTAL);
+            dots.setPadding(0, u(16), 0, 0);
+            info.addView(dots);
+        }
+        top.addView(info, new LinearLayout.LayoutParams(0, -2, 1));
+
+        LinearLayout chips = new LinearLayout(this);
+        chips.setOrientation(LinearLayout.VERTICAL);
+        chips.setClipChildren(false);
+        if (cfg.showClock || cfg.showWeather) chips.addView(clockWeatherChip(false), chipLp());
+        if (cfg.showPrayer) chips.addView(prayerChip(false), chipLp());
+        top.addView(chips, new LinearLayout.LayoutParams(u(400), -2));
+        main.addView(top, new LinearLayout.LayoutParams(-1, u(420)));
+
+        if (cfg.showContent) {
+            contentBody = new LinearLayout(this);
+            contentBody.setOrientation(LinearLayout.HORIZONTAL);
+            contentBody.setClipChildren(false);
+            main.addView(contentBody, new LinearLayout.LayoutParams(-1, u(290)));
+        }
+        if (cfg.showFavorites) main.addView(favoritesSection());
+    }
+
+    private LinearLayout.LayoutParams chipLp() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.bottomMargin = u(16);
+        return lp;
+    }
+
+    private void buildMinimal(LinearLayout main) {
+        main.setGravity(Gravity.CENTER_HORIZONTAL);
+        if (cfg.showClock) {
+            clockV = Ui.tv(this, cfg, "", 210, true);
+            clockV.setGravity(Gravity.CENTER);
+            clockV.setTextDirection(View.TEXT_DIRECTION_LTR);
+            main.addView(clockV, new LinearLayout.LayoutParams(-1, -2));
+            dateV = Ui.tv(this, cfg, "", 34, false);
+            dateV.setGravity(Gravity.CENTER);
+            main.addView(dateV, new LinearLayout.LayoutParams(-1, -2));
+            hijriV = Ui.tv(this, cfg, "", 28, false);
+            hijriV.setTextColor(Ui.muted(cfg));
+            hijriV.setGravity(Gravity.CENTER);
+            hijriV.setPadding(0, u(6), 0, 0);
+            main.addView(hijriV, new LinearLayout.LayoutParams(-1, -2));
+        }
+        LinearLayout chips = new LinearLayout(this);
+        chips.setOrientation(LinearLayout.HORIZONTAL);
+        chips.setGravity(Gravity.CENTER);
+        chips.setClipChildren(false);
+        chips.setPadding(0, u(30), 0, u(10));
+        if (cfg.showWeather) {
+            View w = clockWeatherChip(true);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(u(460), -2);
+            lp.setMarginEnd(u(30));
+            chips.addView(w, lp);
+        }
+        if (cfg.showPrayer) chips.addView(prayerChip(true), new LinearLayout.LayoutParams(u(460), -2));
+        main.addView(chips, new LinearLayout.LayoutParams(-1, -2));
+        main.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+        if (cfg.showFavorites) main.addView(favoritesSection());
+        if (cfg.showAllApps) main.addView(allAppsButton());
+    }
+
+    /** Compact clock/date + weather card (cinema), or weather only (minimal). */
+    private View clockWeatherChip(boolean weatherOnly) {
+        LinearLayout c = card("card:weather", 1.04f, new View.OnClickListener() { @Override public void onClick(View v) { weatherDialog(); } });
+        c.setPadding(u(24), u(18), u(24), u(18));
+        if (!weatherOnly && cfg.showClock) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            clockV = Ui.tv(this, cfg, "", 74, true);
+            clockV.setTextDirection(View.TEXT_DIRECTION_LTR);
+            row.addView(clockV);
+            LinearLayout dates = new LinearLayout(this);
+            dates.setOrientation(LinearLayout.VERTICAL);
+            dates.setPadding(u(18), 0, u(18), 0);
+            dateV = Ui.tv(this, cfg, "", 20, false);
+            hijriV = Ui.tv(this, cfg, "", 18, false);
+            hijriV.setTextColor(Ui.muted(cfg));
+            dates.addView(dateV);
+            dates.addView(hijriV);
+            row.addView(dates, new LinearLayout.LayoutParams(0, -2, 1));
+            c.addView(row);
+        }
+        if (cfg.showWeather) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, weatherOnly ? 0 : u(10), 0, 0);
+            wIconV = Ui.icon(this, "w_cloud_sun", 0, weatherOnly ? 84 : 64);
+            row.addView(wIconV);
+            tempV = Ui.tv(this, cfg, "--°", weatherOnly ? 54 : 42, true);
+            tempV.setTextDirection(View.TEXT_DIRECTION_LTR);
+            tempV.setPadding(u(16), 0, u(16), 0);
+            row.addView(tempV);
+            LinearLayout col = new LinearLayout(this);
+            col.setOrientation(LinearLayout.VERTICAL);
+            condV = Ui.tv(this, cfg, "", 22, false);
+            col.addView(condV);
+            TextView city = Ui.tv(this, cfg, cfg.city, 19, false);
+            city.setTextColor(Ui.muted(cfg));
+            col.addView(city);
+            row.addView(col, new LinearLayout.LayoutParams(0, -2, 1));
+            c.addView(row);
+        }
+        return c;
+    }
+
+    /** Next prayer with countdown (cinema / minimal). */
+    private View prayerChip(boolean big) {
+        LinearLayout c = card("card:prayer", 1.04f, new View.OnClickListener() { @Override public void onClick(View v) { prayerDialog(); } });
+        c.setPadding(u(24), u(18), u(24), u(18));
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(Ui.icon(this, "i_mosque", Ui.accent(cfg), big ? 72 : 56));
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(u(18), 0, u(10), 0);
+        TextView lbl = Ui.tv(this, cfg, s("الصلاة القادمة · جعفري", "Next prayer · Ja'fari"), 19, true);
+        lbl.setTextColor(Ui.accent(cfg));
+        col.addView(lbl);
+        nextNameV = Ui.tv(this, cfg, "", big ? 40 : 32, true);
+        col.addView(nextNameV);
+        nextLeftV = Ui.tv(this, cfg, "", 19, false);
+        nextLeftV.setTextColor(Ui.muted(cfg));
+        col.addView(nextLeftV);
+        row.addView(col, new LinearLayout.LayoutParams(0, -2, 1));
+        nextTimeV = Ui.tv(this, cfg, "", big ? 44 : 36, true);
+        nextTimeV.setTextDirection(View.TEXT_DIRECTION_LTR);
+        row.addView(nextTimeV);
+        c.addView(row);
+        return c;
+    }
+
+    // ================================================================== updates
+
+    private void updateBadge() {
+        View st = getWindow().getDecorView().findViewWithTag("side:settings");
+        if (st == null) st = getWindow().getDecorView().findViewWithTag("top:settings");
+        if (!(st instanceof FrameLayout)) return;
+        View old = st.findViewWithTag("badge");
+        if (old != null) ((FrameLayout) st).removeView(old);
+        if (!tv.ibra.common.Updater.available(this)) return;
+        View dot = new View(this);
+        dot.setTag("badge");
+        dot.setBackground(Ui.pill(this, 0xFFEF4444, 0xFFFFFFFF, 20));
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(u(20), u(20), Gravity.TOP | Gravity.END);
+        lp.setMargins(u(4), u(4), u(4), u(4));
+        ((FrameLayout) st).addView(dot, lp);
+    }
+
+    private boolean updateAsked;
+
+    /** Daily check; in "auto" the APK is downloaded in the background and the user is asked once to install. */
+    private void maybeUpdate() {
+        if ("off".equals(cfg.updateMode) || !tv.ibra.common.Updater.due(this, 12 * 3600 * 1000L)) return;
+        final boolean auto = "auto".equals(cfg.updateMode);
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    final tv.ibra.common.Updater.Info i = tv.ibra.common.Updater.check(getApplicationContext(), "launcher");
+                    if (i == null) return;
+                    final java.io.File apk = auto && i.sameKey ? tv.ibra.common.Updater.download(getApplicationContext(), i, null) : null;
+                    h.post(new Runnable() { @Override public void run() { if (!isFinishing()) { updateBadge(); offerUpdate(i, apk); } } });
+                } catch (Exception e) {
+                    android.util.Log.w("IBRA", "update check: " + e);
+                }
+            }
+        }, "ibra-update").start();
+    }
+
+    void offerUpdate(final tv.ibra.common.Updater.Info i, final java.io.File apk) {
+        if (updateAsked || !resumed) return;
+        updateAsked = true;
+        if (!i.sameKey) {
+            Dlg.info(this, cfg, s("تحديث متوفر: ", "Update available: ") + i.versionName,
+                    s("هذه النسخة موقّعة بمفتاح جديد، فتحتاج تثبيت يدوي مرة وحدة: استخدم مثبّت الموبايل أو برنامج الحاسبة.\n", "This version is signed with a new key, so it needs one manual reinstall: use the phone installer or the PC app.\n")
+                            + tv.ibra.common.Updater.RELEASES);
+            return;
+        }
+        String notes = ar ? i.notesAr : i.notesEn;
+        Dlg.choose(this, cfg, s("تحديث جديد لـ IBRA TV HOME: ", "IBRA TV HOME update: ") + i.versionName + (notes.isEmpty() ? "" : "\n" + notes),
+                new String[]{s("تحديث الآن", "Update now"), s("لاحقاً", "Later")}, new String[]{"i_down", "i_history"}, null, 0, new Dlg.Pick() {
+                    @Override public void on(int k) { if (k == 0) installUpdate(i, apk); }
+                });
+    }
+
+    void installUpdate(final tv.ibra.common.Updater.Info i, final java.io.File ready) {
+        if (!tv.ibra.common.Updater.canInstall(this)) {
+            Toast.makeText(this, s("اسمح لـ IBRA TV HOME بتثبيت التطبيقات، ثم ارجع واضغط تحديث.", "Allow IBRA TV HOME to install apps, then come back and press update."), Toast.LENGTH_LONG).show();
+            tv.ibra.common.Updater.openInstallPermission(this);
+            updateAsked = false;
+            return;
+        }
+        Toast.makeText(this, s("ينزل التحديث…", "Downloading the update…"), Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    java.io.File apk = ready != null ? ready : tv.ibra.common.Updater.download(getApplicationContext(), i, null);
+                    tv.ibra.common.Updater.install(getApplicationContext(), apk);
+                } catch (final Exception e) {
+                    h.post(new Runnable() { @Override public void run() {
+                        Toast.makeText(HomeActivity.this, s("فشل التحديث: ", "Update failed: ") + e.getMessage(), Toast.LENGTH_LONG).show();
+                    } });
+                }
+            }
+        }, "ibra-install").start();
     }
 
     // ------------------------------------------------------------------ sidebar + top bar
@@ -598,7 +890,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     }
 
     private void updatePrayer() {
-        if (prayerRows == null) return;
+        if (prayerRows == null && nextNameV == null) return;
         TimeZone tz = TimeZone.getTimeZone(cfg.tz);
         long now = System.currentTimeMillis();
         Calendar today = Calendar.getInstance(tz);
@@ -612,6 +904,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
             nextTimeV.setText(Prayer.hhmm(at.get(Calendar.HOUR_OF_DAY) * 60 + at.get(Calendar.MINUTE)));
             nextLeftV.setText(remaining((n.atMillis - now) / 60000 + 1));
         }
+        if (prayerRows == null) return;
         prayerRows.removeAllViews();
         int[] list = cfg.prayerCombined ? Prayer.COMBINED : Prayer.PRAYERS;
         for (int idx : list) {
@@ -673,11 +966,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
 
     // ---- entertainment centre
 
-    private View contentCard() {
-        LinearLayout c = card("card:content", 1f, null);
-        c.setPadding(u(22), u(18), u(22), u(14));
-        c.setGravity(Gravity.CENTER_HORIZONTAL);
-
+    private LinearLayout dropButton() {
         LinearLayout drop = new LinearLayout(this);
         drop.setTag("drop");
         drop.setOrientation(LinearLayout.HORIZONTAL);
@@ -695,6 +984,15 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         drop.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { categoryMenu(v); }
         });
+        return drop;
+    }
+
+    private View contentCard() {
+        LinearLayout c = card("card:content", 1f, null);
+        c.setPadding(u(22), u(18), u(22), u(14));
+        c.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        LinearLayout drop = dropButton();
         c.addView(drop, new LinearLayout.LayoutParams(-2, u(60)));
 
         contentBody = new LinearLayout(this);
@@ -752,9 +1050,16 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         items = Content.items(this, cfg, cfg.contentCat);
         if (resetHero || heroIndex >= items.size()) heroIndex = 0;
         contentBody.removeAllViews();
-        dots.removeAllViews();
-        heroImg = null;
+        if (dots != null) dots.removeAllViews();
+        if (!cinema) heroImg = null;
         if (items.isEmpty()) {
+            if (cinema && heroTitle != null) {
+                heroItem = null;
+                heroTitle.setText(Content.label(cfg.contentCat, ar));
+                heroSub.setText("");
+                heroOverview.setText("");
+                ImageLoader.get(this).load(heroImg, null, 0, 0);
+            }
             LinearLayout empty = new LinearLayout(this);
             empty.setOrientation(LinearLayout.VERTICAL);
             empty.setGravity(Gravity.CENTER);
@@ -794,23 +1099,38 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         hs.addView(strip, new FrameLayout.LayoutParams(-2, -1));
         for (int i = 0; i < items.size(); i++) strip.addView(match ? matchTile(items.get(i)) : poster(items.get(i)));
 
-        if (!match) {
+        if (cinema) {
+            contentBody.addView(hs, new LinearLayout.LayoutParams(-1, -1));
+            addDots();
+            if (match) {
+                heroItem = null;
+                heroTitle.setText(Content.label(cfg.contentCat, ar));
+                heroSub.setText(items.get(0).title);
+                heroOverview.setText(items.get(0).subtitle);
+                ImageLoader.get(this).load(heroImg, null, 0, 0);
+            } else setHero(items.get(heroIndex));
+        } else if (!match) {
             contentBody.addView(hs, new LinearLayout.LayoutParams(0, -1, 1f));
             View hero = hero();
             LinearLayout.LayoutParams hl = new LinearLayout.LayoutParams(0, -1, 1.25f);
             hl.setMarginStart(u(14));
             contentBody.addView(hero, hl);
-            int n = Math.min(5, items.size());
-            for (int i = 0; i < n; i++) {
-                View d = new View(this);
-                d.setBackground(Ui.pill(this, Ui.alpha(Ui.text(cfg), 0.35f), 0, 6));
-                LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(u(12), u(12));
-                dl.setMargins(u(5), 0, u(5), 0);
-                dots.addView(d, dl);
-            }
+            addDots();
             setHero(items.get(heroIndex));
         } else {
             contentBody.addView(hs, new LinearLayout.LayoutParams(-1, -1));
+        }
+    }
+
+    private void addDots() {
+        if (dots == null || "football".equals(cfg.contentCat)) return;
+        int n = Math.min(5, items.size());
+        for (int i = 0; i < n; i++) {
+            View d = new View(this);
+            d.setBackground(Ui.pill(this, Ui.alpha(Ui.text(cfg), 0.35f), 0, 6));
+            LinearLayout.LayoutParams dl = new LinearLayout.LayoutParams(u(12), u(12));
+            dl.setMargins(u(5), 0, u(5), 0);
+            dots.addView(d, dl);
         }
     }
 
@@ -869,9 +1189,12 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         heroTitle.setText(it.title);
         String sub = it.year + (it.rating > 0 ? "  ★ " + String.format(Locale.US, "%.1f", it.rating) : "") + (it.subtitle.isEmpty() ? "" : "  ·  " + it.subtitle);
         heroSub.setText(sub.trim());
-        ImageLoader.get(this).load(heroImg, it.backdrop.isEmpty() ? it.poster : it.backdrop, u(560), u(320));
+        if (heroOverview != null) heroOverview.setText(it.overview);
+        String img = it.backdrop.isEmpty() ? it.poster : it.backdrop;
+        if (cinema) ImageLoader.get(this).load(heroImg, img, u(1280), u(720));
+        else ImageLoader.get(this).load(heroImg, img, u(560), u(320));
         int idx = items.indexOf(it);
-        for (int i = 0; i < dots.getChildCount(); i++) {
+        for (int i = 0; dots != null && i < dots.getChildCount(); i++) {
             View d = dots.getChildAt(i);
             ((GradientDrawable) d.getBackground()).setColor(i == idx ? Ui.accent(cfg) : Ui.alpha(Ui.text(cfg), 0.35f));
             d.getLayoutParams().width = i == idx ? u(30) : u(12);
@@ -893,7 +1216,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         ImageView iv = new ImageView(this);
         iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
         f.addView(iv, Dlg.match());
-        if (!it.poster.isEmpty()) ImageLoader.get(this).load(iv, it.poster, u(160), u(240));
+        if (!it.poster.isEmpty()) ImageLoader.get(this).load(iv, it.poster, u(cinema ? 180 : 160), u(cinema ? 270 : 240));
         View shade = new View(this);
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x00000000, 0x00000000, 0xCC000000}));
         f.addView(shade, Dlg.match());
@@ -926,8 +1249,8 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         f.setOnLongClickListener(new View.OnLongClickListener() {
             @Override public boolean onLongClick(View v) { toggleFav(it); return true; }
         });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(u(158), -1);
-        lp.setMarginEnd(u(16));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(u(cinema ? 178 : 158), -1);
+        lp.setMarginEnd(u(cinema ? 22 : 16));
         f.setLayoutParams(lp);
         return f;
     }
@@ -1182,25 +1505,9 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
 
     private View appTile(final String entry, final Apps.App a, int[] sz) {
         FrameLayout f = tileBase(entry, sz);
-        if (a.banner != null) {
-            ImageView iv = new ImageView(this);
-            iv.setImageDrawable(a.banner);
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            f.addView(iv, Dlg.match());
-        } else {
-            LinearLayout col = new LinearLayout(this);
-            col.setOrientation(LinearLayout.VERTICAL);
-            col.setGravity(Gravity.CENTER);
-            ImageView iv = new ImageView(this);
-            iv.setImageDrawable(a.icon);
-            col.addView(iv, new LinearLayout.LayoutParams(sz[1] / 2, sz[1] / 2));
-            TextView t = Ui.tv(this, cfg, a.label, 18, true);
-            t.setSingleLine(true);
-            t.setEllipsize(TextUtils.TruncateAt.END);
-            t.setPadding(u(8), u(6), u(8), 0);
-            col.addView(t);
-            f.addView(col, Dlg.match());
-        }
+        GradientDrawable bg = f.getBackground() instanceof GradientDrawable ? (GradientDrawable) f.getBackground() : null;
+        if (!entry.equals(moving)) Ui.appFace(this, cfg, a, f, bg, sz[0], sz[1], true);
+        else Ui.appFace(this, cfg, a, f, null, sz[0], sz[1], true);
         f.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 if (moving != null) { moving = null; fillFavorites(); return; }

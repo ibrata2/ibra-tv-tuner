@@ -82,32 +82,54 @@ public final class Ui {
     public static int muted(Config cfg) { return alpha(cfg.palette()[3], 0.68f); }
     public static int accent(Config cfg) { return cfg.palette()[2]; }
 
-    /** Glass fill: a lighter tint of the background at the configured opacity. */
+    // ------------------------------------------------------------------ style (set once per screen build)
+
+    /** Corner multiplier from the chosen shape: round 1, soft .5, sharp .12, pill = capsule. */
+    static float rMul = 1f;
+    static String focusStyle = "zoom";
+
+    /** Call at the start of every screen build so shapes, focus and fonts follow the settings. */
+    public static void apply(Config cfg) {
+        rMul = "soft".equals(cfg.corners) ? 0.5f : "sharp".equals(cfg.corners) ? 0.12f : "pill".equals(cfg.corners) ? 3f : 1f;
+        focusStyle = cfg.focusStyle;
+    }
+
+    static float r(float radius) { return radius * rMul; }
+
+    /** Card fill for the chosen surface: glass (tinted, see-through), solid, outline (almost empty) or clear. */
     public static int glassFill(Config cfg) {
         int[] p = cfg.palette();
+        if ("clear".equals(cfg.surface)) return 0x00000000;
+        if ("outline".equals(cfg.surface)) return alpha(cfg.light() ? Color.WHITE : p[0], 0.18f);
+        if ("solid".equals(cfg.surface)) return alpha(cfg.light() ? Color.WHITE : mix(p[1], Color.WHITE, 0.08f), 0.97f);
         int base = cfg.light() ? Color.WHITE : mix(p[1], Color.WHITE, 0.10f);
         return alpha(base, cfg.cardAlpha / 100f * (cfg.light() ? 1.2f : 1f));
     }
 
     public static int glassStroke(Config cfg) {
+        if ("clear".equals(cfg.surface)) return 0x00000000;
+        if ("outline".equals(cfg.surface)) return alpha(cfg.palette()[2], 0.75f);
+        if ("solid".equals(cfg.surface)) return cfg.light() ? alpha(Color.BLACK, 0.08f) : alpha(Color.WHITE, 0.07f);
         return cfg.light() ? alpha(Color.WHITE, 0.85f) : alpha(Color.WHITE, 0.14f);
     }
 
-    /** Rounded glass panel with a soft top highlight. */
+    /** Card panel in the chosen surface; glass gets a soft top highlight. */
     public static Drawable glass(Context c, Config cfg, float radius) {
         GradientDrawable base = new GradientDrawable();
-        base.setCornerRadius(u(c, radius));
+        base.setCornerRadius(u(c, r(radius)));
         base.setColor(glassFill(cfg));
-        base.setStroke(Math.max(1, u(c, 1.5f)), glassStroke(cfg));
+        int st = glassStroke(cfg);
+        base.setStroke(st == 0 ? 0 : Math.max(1, u(c, "outline".equals(cfg.surface) ? 2.5f : 1.5f)), st);
+        boolean shiny = "glass".equals(cfg.surface);
         GradientDrawable shine = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{alpha(Color.WHITE, cfg.light() ? 0.35f : 0.07f), 0x00FFFFFF});
-        shine.setCornerRadius(u(c, radius));
+                new int[]{alpha(Color.WHITE, shiny ? (cfg.light() ? 0.35f : 0.07f) : 0f), 0x00FFFFFF});
+        shine.setCornerRadius(u(c, r(radius)));
         return new LayerDrawable(new Drawable[]{base, shine});
     }
 
     public static GradientDrawable pill(Context c, int fill, int stroke, float radius) {
         GradientDrawable g = new GradientDrawable();
-        g.setCornerRadius(u(c, radius));
+        g.setCornerRadius(u(c, r(radius)));
         g.setColor(fill);
         if (stroke != 0) g.setStroke(Math.max(1, u(c, 1.5f)), stroke);
         return g;
@@ -120,12 +142,109 @@ public final class Ui {
         v.setText(s);
         v.setTextColor(text(cfg));
         v.setTextSize(TypedValue.COMPLEX_UNIT_PX, u(c, sizeRef * (cfg.largeText ? 1f : 0.9f)));
-        v.setTypeface(Typeface.create("sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL));
+        v.setTypeface(typeface(c, cfg, bold));
         v.setIncludeFontPadding(false);
         v.setLineSpacing(0, 1.12f);
         // paragraph direction follows the launcher language, so Latin titles sit on the right in Arabic
         v.setTextDirection(cfg.arabic() ? View.TEXT_DIRECTION_RTL : View.TEXT_DIRECTION_LTR);
         return v;
+    }
+
+    private static final java.util.Map<String, Typeface> fonts = new java.util.HashMap<String, Typeface>();
+
+    /** Bundled Arabic fonts (OFL) or the system font. */
+    public static Typeface typeface(Context c, Config cfg, boolean bold) {
+        if ("system".equals(cfg.font)) return Typeface.create("sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL);
+        String key = cfg.font + (bold ? "-bold" : "-regular");
+        Typeface t = fonts.get(key);
+        if (t == null) {
+            try { t = Typeface.createFromAsset(c.getAssets(), "fonts/" + key + ".ttf"); }
+            catch (Exception e) { t = Typeface.create("sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL); }
+            fonts.put(key, t);
+        }
+        return t;
+    }
+
+    /** Average colour of an app icon, for the colourful tile style. */
+    public static int iconColor(Drawable d, int fallback) {
+        if (d == null) return fallback;
+        try {
+            android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(12, 12, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas cv = new android.graphics.Canvas(b);
+            d.setBounds(0, 0, 12, 12);
+            d.draw(cv);
+            long r = 0, g = 0, bl = 0, n = 0;
+            for (int y = 0; y < 12; y++) for (int x = 0; x < 12; x++) {
+                int px = b.getPixel(x, y);
+                if (Color.alpha(px) < 128) continue;
+                float[] hsv = new float[3];
+                Color.colorToHSV(px, hsv);
+                if (hsv[1] < 0.25f || hsv[2] < 0.2f) continue;      // skip greys, whites and blacks
+                r += Color.red(px); g += Color.green(px); bl += Color.blue(px); n++;
+            }
+            b.recycle();
+            if (n == 0) return fallback;
+            int c = Color.rgb((int) (r / n), (int) (g / n), (int) (bl / n));
+            float[] hsv = new float[3];
+            Color.colorToHSV(c, hsv);
+            hsv[1] = Math.min(1f, hsv[1] * 1.1f);
+            hsv[2] = Math.min(0.78f, Math.max(0.45f, hsv[2]));   // readable white text on top
+            return Color.HSVToColor(hsv);
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    /**
+     * Fills an app tile in the chosen icon style: banner (TV banner, or icon + name), circle (icon in a round
+     * badge), square (icon + name on the card) or colorful (card painted in the icon's colour).
+     */
+    public static void appFace(Context c, Config cfg, Apps.App a, android.widget.FrameLayout tile, GradientDrawable bg,
+                               int w, int h, boolean label) {
+        String st = cfg.iconStyle;
+        if ("banner".equals(st) && a.banner != null) {
+            ImageView iv = new ImageView(c);
+            iv.setImageDrawable(a.banner);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            tile.addView(iv, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            return;
+        }
+        int textColor = text(cfg);
+        if ("colorful".equals(st)) {
+            int col = iconColor(a.icon, accent(cfg));
+            if (bg != null) bg.setColor(col);
+            textColor = Color.WHITE;
+        }
+        LinearLayout col = new LinearLayout(c);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setGravity(Gravity.CENTER);
+        int iconSize = label ? h * 45 / 100 : h * 58 / 100;
+        if ("circle".equals(st)) {
+            android.widget.FrameLayout badge = new android.widget.FrameLayout(c);
+            GradientDrawable circle = new GradientDrawable();
+            circle.setShape(GradientDrawable.OVAL);
+            circle.setColor(cfg.light() ? alpha(Color.WHITE, 0.9f) : alpha(Color.WHITE, 0.12f));
+            circle.setStroke(Math.max(1, u(c, 1.5f)), alpha(accent(cfg), 0.6f));
+            badge.setBackground(circle);
+            ImageView iv = new ImageView(c);
+            iv.setImageDrawable(a.icon);
+            badge.addView(iv, new android.widget.FrameLayout.LayoutParams(iconSize * 70 / 100, iconSize * 70 / 100, Gravity.CENTER));
+            col.addView(badge, new LinearLayout.LayoutParams(iconSize, iconSize));
+        } else {
+            ImageView iv = new ImageView(c);
+            iv.setImageDrawable(a.icon);
+            col.addView(iv, new LinearLayout.LayoutParams(iconSize, iconSize));
+        }
+        if (label) {
+            TextView t = tv(c, cfg, a.label, 18, true);
+            t.setTextColor(textColor);
+            t.setSingleLine(true);
+            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setGravity(Gravity.CENTER);
+            t.setPadding(u(c, 8), u(c, 6), u(c, 8), 0);
+            col.addView(t, new LinearLayout.LayoutParams(-1, -2));
+        }
+        tile.addView(col, new android.widget.FrameLayout.LayoutParams(-1, -1));
     }
 
     public static int drawable(Context c, String name) {
@@ -174,12 +293,22 @@ public final class Ui {
         v.setClickable(true);
         final boolean fx = effects(c, cfg);
         final int idle = ring == null || Boolean.TRUE.equals(v.getTag(IDLE_CLEAR)) ? 0 : glassStroke(cfg);
+        final int idleW = idle == 0 ? 0 : Math.max(1, u(c, "outline".equals(cfg.surface) ? 2.5f : 1.5f));
+        final String fs = cfg.focusStyle;
+        // zoom: ring + zoom · glow: wide soft ring + light zoom · ring: ring only · lift: bigger zoom + shadow, no ring
+        final float z = "ring".equals(fs) ? 1f : "glow".equals(fs) ? 1f + (zoom - 1f) * 0.6f : "lift".equals(fs) ? 1f + (zoom - 1f) * 1.4f : zoom;
+        final int ringW = "glow".equals(fs) ? u(c, 7) : "ring".equals(fs) ? u(c, 5) : u(c, 4);
+        final int ringC = "glow".equals(fs) ? alpha(accent(cfg), 0.65f) : accent(cfg);
+        final boolean showRing = !"lift".equals(fs);
         v.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override public void onFocusChange(View view, boolean has) {
-                float s = has ? zoom : 1f;
+                float s = has ? z : 1f;
                 view.animate().scaleX(s).scaleY(s).setDuration(fx ? 180 : 90).start();
-                if (fx) view.setElevation(has ? u(c, 18) : 0);
-                if (ring != null) ring.setStroke(has ? u(c, 4) : idle == 0 ? 0 : Math.max(1, u(c, 1.5f)), has ? accent(cfg) : idle);
+                if (fx) view.setElevation(has ? u(c, "lift".equals(fs) ? 30 : 18) : 0);
+                if (ring != null) {
+                    if (has && showRing) ring.setStroke(ringW, ringC);
+                    else ring.setStroke(idleW, idle);
+                }
                 if (extra != null) extra.onFocusChange(view, has);
             }
         });

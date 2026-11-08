@@ -50,6 +50,8 @@ public final class TvInstaller {
     public int sdk = 0;
     public String model = "";
     public String release = "";
+    /** versionName of IBRA TV HOME already on the TV, or "" when it is not installed. */
+    public String launcherVersion = "";
 
     public TvInstaller(AdbClient adb, String deviceKey, Store store, Log log) {
         this.adb = adb;
@@ -70,6 +72,10 @@ public final class TvInstaller {
         String serial = adb.shell("getprop ro.serialno").trim();
         if (!serial.isEmpty() && !serial.equalsIgnoreCase("unknown") && serial.length() < 64) deviceKey = serial + "@" + model;
         log.step(true, "اتصلنا بـ " + (model.isEmpty() ? "التلفزيون" : model) + " (أندرويد " + release + ")");
+        String d = adb.shell("dumpsys package " + PKG + " | grep versionName");
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("versionName=([0-9A-Za-z._\\-]+)").matcher(d);
+        launcherVersion = m.find() ? m.group(1) : "";
+        if (!launcherVersion.isEmpty()) log.info("IBRA TV HOME الموجودة على التلفزيون: النسخة " + launcherVersion);
     }
 
     /** Current default Home component, or null if the system shows a chooser / cannot tell. */
@@ -130,12 +136,21 @@ public final class TvInstaller {
         log.step(true, "انرفعت IBRA TV HOME للتلفزيون");
 
         String r = adb.shell("pm install -r -d " + REMOTE_APK);
+        if (r.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE") || r.contains("signatures do not match")) {
+            // the copy on the TV was signed with an older key: replace it (its look settings start fresh)
+            log.info("النسخة القديمة على التلفزيون موقّعة بمفتاح مختلف؛ نحذفها ونثبّت الجديدة.");
+            adb.shell("pm uninstall " + PKG);
+            r = adb.shell("pm install -r " + REMOTE_APK);
+            had = false;
+        }
         adb.shell("rm -f " + REMOTE_APK);
         if (!r.contains("Success") || !installed()) {
             log.step(false, "التثبيت فشل: " + shortErr(r));
             return false;
         }
         log.step(true, "تثبّتت IBRA TV HOME");
+        // Let the launcher update itself later (Android 8+ asks per app; this is that switch).
+        if (sdk >= 26) adb.shell("appops set " + PKG + " REQUEST_INSTALL_PACKAGES allow");
 
         // Tell the launcher where the original Home is, so it shows an "original home" tile.
         // Only on a fresh install: a config broadcast replaces the launcher's saved settings.

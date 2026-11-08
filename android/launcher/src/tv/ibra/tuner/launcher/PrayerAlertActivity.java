@@ -33,6 +33,7 @@ public class PrayerAlertActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         Config cfg = Config.load(this);
+        Ui.apply(cfg);
         boolean ar = cfg.arabic();
         int index = getIntent().getIntExtra("index", Prayer.MAGHRIB);
 

@@ -277,6 +277,23 @@ await T("benchmark records method and runs", async () =>
     Eq(3, m.RunsMs.Count); Eq(812, m.MedianMs); True(m.Method.Contains("am start -W"), "method recorded");
 });
 
+Console.WriteLine("Updates");
+await T("update manifest: parse, newer check, host and hash validation", async () =>
+{
+    var sha = new string('a', 64);
+    var json = "{\"build\":42,\"notesAr\":\"جديد\",\"notesEn\":\"new\",\"windows\":{\"version\":\"0.1.42\",\"url\":\"https://github.com/ibrata2/ibra-tv-tuner/releases/download/v0.1.0/IbraTvTuner.exe\",\"sha256\":\"" + sha + "\",\"size\":123}}";
+    var u = IbraTvTuner.Core.Update.UpdateManifest.ParseWindows(json);
+    Eq(new Version(0, 1, 42), u.Version); Eq(sha, u.Sha256); Eq("جديد", u.NotesAr); Eq(123L, u.Size);
+    True(IbraTvTuner.Core.Update.UpdateManifest.IsNewer(new Version(0, 1, 41, 0), u.Version), "41 < 42");
+    True(!IbraTvTuner.Core.Update.UpdateManifest.IsNewer(new Version(0, 1, 42, 0), u.Version), "42 == 42");
+    True(!IbraTvTuner.Core.Update.UpdateManifest.IsNewer(new Version(0, 2, 0), u.Version), "0.2 > 0.1.42");
+    Throws<FormatException>(() => IbraTvTuner.Core.Update.UpdateManifest.ParseWindows(json.Replace("https://github.com/", "https://evil.example/")));
+    Throws<FormatException>(() => IbraTvTuner.Core.Update.UpdateManifest.ParseWindows(json.Replace(sha, "xyz")));
+    var script = IbraTvTuner.Core.Update.UpdateManifest.SwapScript(1234, @"C:\t\new.exe", @"C:\app\IbraTvTuner.exe");
+    True(script.Contains("PID eq 1234") && script.Contains("copy /y") && script.Contains(@"start """" ""C:\app\IbraTvTuner.exe"""), "swap script");
+    await Task.CompletedTask;
+});
+
 Console.WriteLine($"\n{pass} passed, {fail} failed");
 try { Directory.Delete(AppPaths.Root, true); } catch { }
 return fail == 0 ? 0 : 1;

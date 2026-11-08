@@ -48,6 +48,8 @@
                         <Hyperlink NavigateUri="https://www.tiktok.com/@ibraprogram" RequestNavigate="Link_Navigate" Foreground="{StaticResource Accent}">TikTok @ibraprogram</Hyperlink>
                     </TextBlock>
                     <TextBlock x:Name="VersionText" Style="{StaticResource Hint}" FontSize="11" FlowDirection="LeftToRight"/>
+                    <Button Click="Update_Click" Content="{Binding [CheckUpdates], Source={x:Static local:Loc.I}}" HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
+                    <CheckBox x:Name="AutoUpdateBox" Content="{Binding [AutoUpdate], Source={x:Static local:Loc.I}}" Margin="0,6,0,0" Checked="AutoUpdate_Changed" Unchecked="AutoUpdate_Changed"/>
                 </StackPanel>
             </DockPanel>
         </Border>

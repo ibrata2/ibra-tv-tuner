@@ -35,6 +35,8 @@ public sealed class Loc : INotifyPropertyChanged
     private static readonly Dictionary<string, (string Ar, string En)> Strings = new()
     {
         ["AppTitle"] = ("IBRA TV Tuner", "IBRA TV Tuner"),
+        ["CheckUpdates"] = ("تحقق من التحديثات", "Check for updates"),
+        ["AutoUpdate"] = ("تحديث تلقائي", "Automatic updates"),
         ["Tagline"] = ("تخصيص التلفزيون والبوكس من الحاسبة", "Customise your TV and box from the PC"),
         ["NavDevices"] = ("الأجهزة", "Devices"),
         ["NavAppearance"] = ("المظهر", "Appearance"),

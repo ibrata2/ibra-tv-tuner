@@ -40,6 +40,7 @@ public class AllAppsActivity extends Activity {
         super.onCreate(b);
         cfg = Config.load(this);
         ar = cfg.arabic();
+        Ui.apply(cfg);
         FrameLayout root = new FrameLayout(this);
         root.setLayoutDirection(ar ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
         root.addView(new Ui.Background(this, cfg), Dlg.match());
@@ -172,16 +173,7 @@ public class AllAppsActivity extends Activity {
         GradientDrawable g = Ui.pill(this, Ui.glassFill(cfg), Ui.glassStroke(cfg), 20);
         card.setBackground(g);
         card.setClipToOutline(true);
-        if (a.banner != null) {
-            ImageView iv = new ImageView(this);
-            iv.setImageDrawable(a.banner);
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            card.addView(iv, Dlg.match());
-        } else {
-            ImageView iv = new ImageView(this);
-            iv.setImageDrawable(a.icon);
-            card.addView(iv, new FrameLayout.LayoutParams(h * 3 / 5, h * 3 / 5, Gravity.CENTER));
-        }
+        Ui.appFace(this, cfg, a, card, g, w, h, false);
         if (cfg.favorites.contains(a.pkg)) {
             ImageView st = Ui.icon(this, "i_star", Ui.accent(cfg), 26);
             FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(u(26), u(26), Gravity.TOP | Gravity.START);

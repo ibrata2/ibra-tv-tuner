@@ -37,6 +37,16 @@ public final class Config {
     public int columns = 6;                    // all-apps grid columns (4..8); same key the Windows app sends
     public String effects = "auto";            // auto | on | off
     public boolean largeText = true;
+    // ---- style (shapes and layout)
+    public String layout = "classic";          // classic | cinema | minimal
+    public String corners = "round";           // round | soft | sharp | pill
+    public String surface = "glass";           // glass | solid | outline | clear
+    public String focusStyle = "zoom";         // zoom | glow | ring | lift
+    public String iconStyle = "banner";        // banner | circle | square | colorful
+    public String font = "system";             // system | cairo | tajawal | almarai | reemkufi
+    public String preset = "ibra";             // last preset applied (display only)
+    // ---- updates
+    public String updateMode = "auto";         // auto | notify | off
     // custom colours (theme "custom", or sent by the Windows app)
     public int bg1 = Color.parseColor("#07080F");
     public int bg2 = Color.parseColor("#121A33");
@@ -90,7 +100,38 @@ public final class Config {
 
     // ------------------------------------------------------------------ theme colours
 
-    public static final String[] THEMES = {"glass_black", "glass_white", "red_black", "purple_cinema", "gold"};
+    public static final String[] THEMES = {"glass_black", "glass_white", "red_black", "purple_cinema", "gold",
+            "ocean", "emerald", "rose", "sunset", "amoled", "slate", "cream"};
+    public static final String[] LAYOUTS = {"classic", "cinema", "minimal"};
+    public static final String[] CORNERS = {"round", "soft", "sharp", "pill"};
+    public static final String[] SURFACES = {"glass", "solid", "outline", "clear"};
+    public static final String[] FOCUS = {"zoom", "glow", "ring", "lift"};
+    public static final String[] ICONS = {"banner", "circle", "square", "colorful"};
+    public static final String[] FONTS = {"system", "cairo", "tajawal", "almarai", "reemkufi"};
+
+    /**
+     * Ready-made looks: {id, layout, corners, surface, focus, icons, font, theme, background, iconSize}.
+     * Applying one changes only the look, never favourites, city or prayer settings.
+     */
+    public static final String[][] PRESETS = {
+            {"ibra", "classic", "round", "glass", "zoom", "banner", "system", "glass_black", "horizon", "1"},
+            {"cinema", "cinema", "soft", "glass", "glow", "banner", "cairo", "purple_cinema", "gradient", "1"},
+            {"luxury", "classic", "soft", "outline", "ring", "circle", "reemkufi", "gold", "horizon", "1"},
+            {"simple", "minimal", "round", "solid", "zoom", "square", "tajawal", "slate", "gradient", "2"},
+            {"metro", "classic", "sharp", "solid", "lift", "colorful", "cairo", "amoled", "gradient", "1"},
+            {"neon", "classic", "sharp", "outline", "glow", "banner", "almarai", "red_black", "animated", "1"},
+            {"calm", "classic", "round", "glass", "zoom", "circle", "tajawal", "glass_white", "gradient", "1"},
+            {"ocean", "cinema", "pill", "glass", "zoom", "banner", "almarai", "ocean", "animated", "1"},
+            {"emerald", "minimal", "soft", "glass", "glow", "circle", "cairo", "emerald", "horizon", "2"},
+            {"sunset", "classic", "pill", "solid", "glow", "colorful", "reemkufi", "sunset", "gradient", "1"},
+            {"rose", "cinema", "round", "glass", "glow", "circle", "tajawal", "rose", "animated", "1"},
+            {"paper", "minimal", "soft", "solid", "ring", "square", "almarai", "cream", "gradient", "2"},
+    };
+
+    public void applyPreset(String[] p) {
+        preset = p[0]; layout = p[1]; corners = p[2]; surface = p[3]; focusStyle = p[4]; iconStyle = p[5];
+        font = p[6]; theme = p[7]; background = p[8]; iconSize = Integer.parseInt(p[9]);
+    }
 
     /** {bg1, bg2, accent, text, glow} for the active theme. */
     public int[] palette() {
@@ -98,11 +139,18 @@ public final class Config {
         if ("red_black".equals(theme)) return new int[]{0xFF050505, 0xFF2A070C, 0xFFE11D2E, 0xFFF8F1F1, 0xFFFF4D5E};
         if ("purple_cinema".equals(theme)) return new int[]{0xFF0A0620, 0xFF2B1259, 0xFFA78BFA, 0xFFF5F3FF, 0xFFC084FC};
         if ("gold".equals(theme)) return new int[]{0xFF0A0A0A, 0xFF1C1608, 0xFFC9A84C, 0xFFF5F0E1, 0xFFE8C766};
+        if ("ocean".equals(theme)) return new int[]{0xFF02111F, 0xFF0B4F6C, 0xFF38BDF8, 0xFFEFF9FF, 0xFF22D3EE};
+        if ("emerald".equals(theme)) return new int[]{0xFF03100C, 0xFF0B3B2E, 0xFF34D399, 0xFFECFDF5, 0xFF10B981};
+        if ("rose".equals(theme)) return new int[]{0xFF14050C, 0xFF4A1530, 0xFFF472B6, 0xFFFDF2F8, 0xFFEC4899};
+        if ("sunset".equals(theme)) return new int[]{0xFF140803, 0xFF4A1D0C, 0xFFFB923C, 0xFFFFF7ED, 0xFFF97316};
+        if ("amoled".equals(theme)) return new int[]{0xFF000000, 0xFF000000, 0xFFFFFFFF, 0xFFF5F5F5, 0xFF3B3B3B};
+        if ("slate".equals(theme)) return new int[]{0xFF0B1220, 0xFF1E293B, 0xFF94A3B8, 0xFFF1F5F9, 0xFF64748B};
+        if ("cream".equals(theme)) return new int[]{0xFFF7F1E8, 0xFFE6D6BF, 0xFFB45309, 0xFF1C1917, 0xFFF59E0B};
         if ("custom".equals(theme)) return new int[]{bg1, bg2, accent, text, accent};
         return new int[]{0xFF06070D, 0xFF111A36, 0xFF8B5CF6, 0xFFF1F5F9, 0xFF7C3AED};   // glass_black (default)
     }
 
-    public boolean light() { return "glass_white".equals(theme); }
+    public boolean light() { return "glass_white".equals(theme) || "cream".equals(theme); }
 
     // ------------------------------------------------------------------ parsing
 
@@ -135,6 +183,8 @@ public final class Config {
         out.addAll(tmp);
     }
 
+    static String pick(String v, String[] allowed, String def) { return Arrays.asList(allowed).contains(v) ? v : def; }
+
     static int clamp(int v, int lo, int hi) { return Math.max(lo, Math.min(hi, v)); }
 
     static String clip(String s, int max) {
@@ -159,6 +209,17 @@ public final class Config {
         if (o.has("columns")) columns = clamp(o.optInt("columns", columns), 4, 8);
         if (o.has("effects")) { String e = o.optString("effects"); if (e.equals("on") || e.equals("off") || e.equals("auto")) effects = e; }
         if (o.has("largeText")) largeText = o.optBoolean("largeText", largeText);
+        if (o.has("layout")) layout = pick(o.optString("layout"), LAYOUTS, layout);
+        if (o.has("corners")) corners = pick(o.optString("corners"), CORNERS, corners);
+        if (o.has("surface")) surface = pick(o.optString("surface"), SURFACES, surface);
+        if (o.has("focusStyle")) focusStyle = pick(o.optString("focusStyle"), FOCUS, focusStyle);
+        if (o.has("iconStyle")) iconStyle = pick(o.optString("iconStyle"), ICONS, iconStyle);
+        if (o.has("font")) font = pick(o.optString("font"), FONTS, font);
+        if (o.has("preset")) preset = clip(o.optString("preset"), 20);
+        if (o.has("updateMode")) updateMode = pick(o.optString("updateMode"), new String[]{"auto", "notify", "off"}, updateMode);
+        if (o.has("applyPreset")) {
+            for (String[] p : PRESETS) if (p[0].equals(o.optString("applyPreset"))) applyPreset(p);
+        }
 
         boolean colours = false;
         if (o.has("background1")) { bg1 = color(o.optString("background1"), bg1); colours = true; }
@@ -250,6 +311,14 @@ public final class Config {
             o.put("columns", columns);
             o.put("effects", effects);
             o.put("largeText", largeText);
+            o.put("layout", layout);
+            o.put("corners", corners);
+            o.put("surface", surface);
+            o.put("focusStyle", focusStyle);
+            o.put("iconStyle", iconStyle);
+            o.put("font", font);
+            o.put("preset", preset);
+            o.put("updateMode", updateMode);
             o.put("background1", hex(bg1));
             o.put("background2", hex(bg2));
             o.put("accent", hex(accent));

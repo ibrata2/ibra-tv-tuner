@@ -51,6 +51,10 @@ def shell(cmd):
         return '\n'.join(l)
     if cmd.startswith('pm install'):
         p=cmd.split()[-1]
+        if os.environ.get('MISMATCH') and s['installed'] and not s.get('mm_done'):
+            s['mm_done']=True
+            return 'Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package tv.ibra.tuner.launcher signatures do not match previously installed version]'
+
         if s['files'].get(p)!=open(APK,'rb').read(): return 'Failure [INSTALL_FAILED_INVALID_APK]'
         s['installed']=True; return 'Success'
     if cmd.startswith('rm -f'): s['files'].pop(cmd.split()[-1],None); return ''

@@ -63,6 +63,11 @@ public sealed class AppSettings
     public string? AdbPath { get; set; }
     public string Language { get; set; } = "ar";
     public bool AcceptedPlatformToolsTerms { get; set; }
+    /// <summary>Check the GitHub release for a newer version at start-up (at most twice a day).</summary>
+    public bool AutoUpdate { get; set; } = true;
+    public DateTimeOffset LastUpdateCheck { get; set; }
+    /// <summary>Version the user chose to skip.</summary>
+    public string? SkippedVersion { get; set; }
 
     public static AppSettings Load() => Json.Load<AppSettings>(AppPaths.SettingsFile) ?? new AppSettings();
     public void Save() => Json.Save(AppPaths.SettingsFile, this);

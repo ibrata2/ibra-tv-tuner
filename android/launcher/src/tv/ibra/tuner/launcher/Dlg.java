@@ -38,7 +38,7 @@ public final class Dlg {
         int[] p = cfg.palette();
         GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Ui.alpha(Ui.mix(p[1], cfg.light() ? Color.WHITE : p[0], 0.35f), 0.97f), Ui.alpha(p[1], 0.97f)});
-        g.setCornerRadius(u(a, 32));
+        g.setCornerRadius(u(a, Ui.r(32)));
         g.setStroke(Math.max(1, u(a, 2)), Ui.alpha(p[2], 0.55f));
         return g;
     }

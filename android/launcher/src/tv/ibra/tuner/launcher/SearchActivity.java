@@ -34,6 +34,7 @@ public class SearchActivity extends Activity {
         super.onCreate(b);
         cfg = Config.load(this);
         ar = cfg.arabic();
+        Ui.apply(cfg);
         FrameLayout root = new FrameLayout(this);
         root.setLayoutDirection(ar ? View.LAYOUT_DIRECTION_RTL : View.LAYOUT_DIRECTION_LTR);
         root.addView(new Ui.Background(this, cfg), Dlg.match());

@@ -72,3 +72,5 @@ SOFTWARE.
 - **Data shown at runtime** (not bundled): Open-Meteo (weather, geocoding), TVmaze (schedule; CC BY-SA),
   Jikan / MyAnimeList and AniList (anime), TMDB (optional, user's own key — "This product uses the TMDB API but is not endorsed or
   certified by TMDB"), Apple iTunes RSS (top movies), ESPN public scoreboards.
+- **Fonts** — Cairo, Tajawal, Almarai and Reem Kufi from Google Fonts (SIL Open Font License 1.1), subset to Arabic +
+  Latin in `android/launcher/assets/fonts`. Licences: `licenses/fonts/`.

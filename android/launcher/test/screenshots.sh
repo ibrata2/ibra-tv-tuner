@@ -22,29 +22,32 @@ key() { $A shell input keyevent "$@"; }
 shot 01-home-series 45
 shot 01b-home-later 20
 cfg '{"contentCat":"anime"}';                         shot 02-home-anime 20
-cfg '{"contentCat":"movies"}';                        shot 03-home-movies 20
 cfg '{"contentCat":"football"}';                      shot 04-home-football 15
-cfg '{"contentCat":"tv","prayerCombined":true}';     shot 05-home-tv-combined 20
-cfg '{"theme":"glass_white","contentCat":"series","prayerCombined":false}'; shot 06-theme-white 8
-cfg '{"theme":"red_black","background":"gradient"}';  shot 07-theme-red 8
-cfg '{"theme":"purple_cinema","background":"animated"}'; shot 08-theme-purple 8
-cfg '{"theme":"gold","background":"horizon","iconSize":2}'; shot 09-theme-gold-large 8
-cfg '{"theme":"glass_black","lang":"en","iconSize":1}'; shot 10-english 8
-cfg '{"lang":"ar"}';                                  shot 11-arabic-again 6
+cfg '{"contentCat":"series"}'; sleep 3
+n=10
+for p in ibra cinema luxury simple metro neon calm ocean emerald sunset rose paper; do
+  cfg "{\"applyPreset\":\"$p\"}"; n=$((n+1)); shot "$n-style-$p" 9
+done
+cfg '{"applyPreset":"cinema","lang":"en"}';           shot 30-cinema-english 8
+cfg '{"applyPreset":"metro","lang":"ar"}' apps;      shot 31-all-apps-metro 6
+key KEYCODE_BACK
+cfg '{"applyPreset":"luxury"}' apps;                  shot 32-all-apps-circle 6
+key KEYCODE_BACK
+cfg '{"applyPreset":"ibra"}'; sleep 2
 # dropdown: focus the category button and open it
 cfg '{}' home; sleep 3
 key KEYCODE_DPAD_UP; sleep 1; key KEYCODE_DPAD_UP; sleep 1
 $A shell dumpsys window | grep -i mCurrentFocus | head -1 > "$OUT/focus.txt"
-cfg '{}' settings;                                    shot 12-settings 6
-key KEYCODE_DPAD_CENTER;                              shot 13-settings-theme-dialog 4
+cfg '{}' settings;                                    shot 40-settings 6
+key KEYCODE_DPAD_CENTER;                              shot 41-settings-preset-dialog 4
 key KEYCODE_BACK; key KEYCODE_BACK
-cfg '{}' apps;                                        shot 14-all-apps 6
+cfg '{}' apps;                                        shot 42-all-apps 6
 key KEYCODE_BACK
-cfg '{}' search;                                      shot 15-search 6
-$A shell input text "you"; shot 16-search-results 4
+cfg '{}' search;                                      shot 43-search 6
+$A shell input text "you"; shot 44-search-results 4
 key KEYCODE_BACK; key KEYCODE_BACK
 cfg '{}' home; sleep 2
-key KEYCODE_DPAD_CENTER; shot 17-after-ok 5
+key KEYCODE_DPAD_CENTER; shot 45-after-ok 5
 
 $A logcat -d > "$OUT/logcat.txt"
 grep -E " IBRA |FATAL" "$OUT/logcat.txt" > "$OUT/ibra-log.txt" || true

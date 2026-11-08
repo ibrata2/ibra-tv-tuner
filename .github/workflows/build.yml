@@ -108,6 +108,10 @@ jobs:
           path: IbraTvTuner-win-x64-portable.zip
       - uses: actions/upload-artifact@v4
         with:
+          name: IbraTvTuner-exe
+          path: publish/IbraTvTuner.exe
+      - uses: actions/upload-artifact@v4
+        with:
           name: checks
           path: checks/
 
@@ -126,10 +130,16 @@ jobs:
         run: |
           cp art/IbraTvTuner-win-x64-portable/*.zip .
           cp art/apks/*.apk .
-          files="IbraTvTuner-win-x64-portable.zip ibra-tv-launcher.apk ibra-home-installer.apk ibra-tv-testapp.apk"
+          cp art/IbraTvTuner-exe/IbraTvTuner.exe .
+          sudo apt-get install -y -q aapt apksigner >/dev/null
+          python3 tools/make_update_json.py ${{ github.run_number }} . > update.json
+          cat update.json
+          files="IbraTvTuner-win-x64-portable.zip IbraTvTuner.exe ibra-tv-launcher.apk ibra-home-installer.apk ibra-tv-testapp.apk"
           if gh release view v0.1.0 >/dev/null 2>&1; then
             gh release edit v0.1.0 --draft=false --prerelease --title "IBRA TV Tuner + IBRA HOME v0.1.0" --notes-file docs/RELEASE_NOTES.md
             gh release upload v0.1.0 $files --clobber
           else
             gh release create v0.1.0 --prerelease --title "IBRA TV Tuner + IBRA HOME v0.1.0" --notes-file docs/RELEASE_NOTES.md --target "$GITHUB_SHA" $files
           fi
+          # last, so the apps never see a manifest that points at files not uploaded yet
+          gh release upload v0.1.0 update.json --clobber

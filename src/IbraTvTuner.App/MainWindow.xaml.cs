@@ -26,6 +26,22 @@ public partial class MainWindow : Window
         Loc.I.PropertyChanged += (_, _) => { ReloadDevices(); UpdatePlatform(); };
         ReloadDevices();
         Show("devices");
+        AutoUpdateBox.IsChecked = AppState.I.Settings.AutoUpdate;
+        Loaded += async (_, _) =>
+        {
+            await Task.Delay(4000);
+            await Updater.AutoCheckAsync(t => VersionText.Text = t);
+        };
+    }
+
+    private async void Update_Click(object sender, RoutedEventArgs e) =>
+        await Updater.CheckAsync(interactive: true, t => VersionText.Text = t);
+
+    private void AutoUpdate_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!IsInitialized) return;
+        AppState.I.Settings.AutoUpdate = AutoUpdateBox.IsChecked == true;
+        AppState.I.Settings.Save();
     }
 
     private UserControl Page(string key)

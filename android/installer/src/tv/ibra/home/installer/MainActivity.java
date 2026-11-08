@@ -81,6 +81,10 @@ public class MainActivity extends Activity {
         sub.setAlpha(0.8f);
         col.addView(sub);
 
+        updateBox = new LinearLayout(this);
+        updateBox.setOrientation(LinearLayout.VERTICAL);
+        col.addView(updateBox);
+
         // 1 — prepare the TV
         LinearLayout c1 = card(col, "١. جهّز التلفزيون (مرة وحدة)");
         String[] steps = {
@@ -157,6 +161,69 @@ public class MainActivity extends Activity {
         col.addView(tg);
 
         setContentView(scroll);
+        checkSelfUpdate();
+    }
+
+    // ------------------------------------------------------------------ self-update
+
+    private LinearLayout updateBox;
+
+    private void checkSelfUpdate() {
+        tv.ibra.common.Updater.setLanguage(this, true);
+        if (!tv.ibra.common.Updater.due(this, 6 * 3600 * 1000L) && !tv.ibra.common.Updater.available(this)) return;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    final tv.ibra.common.Updater.Info i = tv.ibra.common.Updater.check(getApplicationContext(), "installer");
+                    if (i != null) ui.post(new Runnable() { @Override public void run() { showUpdate(i); } });
+                } catch (Exception ignored) { }
+            }
+        }, "update").start();
+    }
+
+    private void showUpdate(final tv.ibra.common.Updater.Info i) {
+        updateBox.removeAllViews();
+        LinearLayout c = card(updateBox, "⬆ تحديث جديد: " + i.versionName);
+        if (!i.notesAr.isEmpty()) c.addView(text(i.notesAr, 14, false));
+        if (!i.sameKey) {
+            c.addView(text("هذه النسخة موقّعة بمفتاح جديد: احذف المثبّت الحالي ونزّل الجديد من صفحة الإصدارات.", 14, false));
+            Button open = button("افتح صفحة الإصدارات", false);
+            open.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(tv.ibra.common.Updater.RELEASES))); } catch (Exception ignored) { }
+                }
+            });
+            c.addView(open, lp(dp(10)));
+            return;
+        }
+        final Button go = button("حدّث المثبّت الآن (والواجهة الجديدة معه)", true);
+        go.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                if (!tv.ibra.common.Updater.canInstall(MainActivity.this)) {
+                    setStatus("اسمح للمثبّت بتثبيت التطبيقات ثم ارجع واضغط تحديث.");
+                    tv.ibra.common.Updater.openInstallPermission(MainActivity.this);
+                    return;
+                }
+                go.setEnabled(false);
+                new Thread(new Runnable() {
+                    @Override public void run() {
+                        try {
+                            java.io.File apk = tv.ibra.common.Updater.download(getApplicationContext(), i, new tv.ibra.common.Updater.Progress() {
+                                int last = -1;
+                                @Override public void on(long d, long t) {
+                                    final int pct = t > 0 ? (int) (d * 100 / t) : 0;
+                                    if (pct != last) { last = pct; ui.post(new Runnable() { @Override public void run() { go.setText("ينزل التحديث… " + pct + "٪"); } }); }
+                                }
+                            });
+                            tv.ibra.common.Updater.install(getApplicationContext(), apk);
+                        } catch (final Exception e) {
+                            ui.post(new Runnable() { @Override public void run() { go.setEnabled(true); go.setText("أعد المحاولة"); setStatus("فشل التحديث: " + e.getMessage()); } });
+                        }
+                    }
+                }, "update").start();
+            }
+        });
+        c.addView(go, lp(dp(10)));
     }
 
     // ------------------------------------------------------------------ views
