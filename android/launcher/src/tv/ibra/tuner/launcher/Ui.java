@@ -141,13 +141,21 @@ public final class Ui {
         TextView v = new TextView(c);
         v.setText(s);
         v.setTextColor(text(cfg));
-        v.setTextSize(TypedValue.COMPLEX_UNIT_PX, u(c, sizeRef * (cfg.largeText ? 1f : 0.9f)));
+        v.setTextSize(TypedValue.COMPLEX_UNIT_PX, u(c, sizeRef * (cfg.largeText ? 1f : 0.9f) * fontScale(cfg)));
         v.setTypeface(typeface(c, cfg, bold));
         v.setIncludeFontPadding(false);
         v.setLineSpacing(0, 1.12f);
         // paragraph direction follows the launcher language, so Latin titles sit on the right in Arabic
         v.setTextDirection(cfg.arabic() ? View.TEXT_DIRECTION_RTL : View.TEXT_DIRECTION_LTR);
         return v;
+    }
+
+    /** Cairo and Almarai have taller lines than the system font; scale them so cards keep the same height. */
+    static float fontScale(Config cfg) {
+        if ("cairo".equals(cfg.font)) return 0.86f;
+        if ("almarai".equals(cfg.font)) return 0.92f;
+        if ("reemkufi".equals(cfg.font)) return 0.95f;
+        return 1f;
     }
 
     private static final java.util.Map<String, Typeface> fonts = new java.util.HashMap<String, Typeface>();

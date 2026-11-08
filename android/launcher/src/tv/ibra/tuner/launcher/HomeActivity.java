@@ -394,7 +394,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
     private void buildMinimal(LinearLayout main) {
         main.setGravity(Gravity.CENTER_HORIZONTAL);
         if (cfg.showClock) {
-            clockV = Ui.tv(this, cfg, "", 210, true);
+            clockV = Ui.tv(this, cfg, "", 180, true);
             clockV.setGravity(Gravity.CENTER);
             clockV.setTextDirection(View.TEXT_DIRECTION_LTR);
             main.addView(clockV, new LinearLayout.LayoutParams(-1, -2));
@@ -430,22 +430,19 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout c = card("card:weather", 1.04f, new View.OnClickListener() { @Override public void onClick(View v) { weatherDialog(); } });
         c.setPadding(u(24), u(18), u(24), u(18));
         if (!weatherOnly && cfg.showClock) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            clockV = Ui.tv(this, cfg, "", 74, true);
+            clockV = Ui.tv(this, cfg, "", 78, true);
             clockV.setTextDirection(View.TEXT_DIRECTION_LTR);
-            row.addView(clockV);
-            LinearLayout dates = new LinearLayout(this);
-            dates.setOrientation(LinearLayout.VERTICAL);
-            dates.setPadding(u(18), 0, u(18), 0);
-            dateV = Ui.tv(this, cfg, "", 20, false);
-            hijriV = Ui.tv(this, cfg, "", 18, false);
+            clockV.setGravity(Gravity.CENTER);
+            c.addView(clockV, new LinearLayout.LayoutParams(-1, -2));
+            dateV = Ui.tv(this, cfg, "", 21, false);
+            dateV.setGravity(Gravity.CENTER);
+            dateV.setSingleLine(true);
+            c.addView(dateV, new LinearLayout.LayoutParams(-1, -2));
+            hijriV = Ui.tv(this, cfg, "", 19, false);
             hijriV.setTextColor(Ui.muted(cfg));
-            dates.addView(dateV);
-            dates.addView(hijriV);
-            row.addView(dates, new LinearLayout.LayoutParams(0, -2, 1));
-            c.addView(row);
+            hijriV.setGravity(Gravity.CENTER);
+            hijriV.setSingleLine(true);
+            c.addView(hijriV, new LinearLayout.LayoutParams(-1, -2));
         }
         if (cfg.showWeather) {
             LinearLayout row = new LinearLayout(this);
@@ -482,16 +479,18 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         col.setPadding(u(18), 0, u(10), 0);
-        TextView lbl = Ui.tv(this, cfg, s("الصلاة القادمة · جعفري", "Next prayer · Ja'fari"), 19, true);
+        TextView lbl = Ui.tv(this, cfg, s("الصلاة القادمة · جعفري", "Next prayer · Ja'fari"), 18, true);
+        lbl.setSingleLine(true);
         lbl.setTextColor(Ui.accent(cfg));
         col.addView(lbl);
-        nextNameV = Ui.tv(this, cfg, "", big ? 40 : 32, true);
+        nextNameV = Ui.tv(this, cfg, "", big ? 38 : 28, true);
+        nextNameV.setSingleLine(true);
         col.addView(nextNameV);
         nextLeftV = Ui.tv(this, cfg, "", 19, false);
         nextLeftV.setTextColor(Ui.muted(cfg));
         col.addView(nextLeftV);
         row.addView(col, new LinearLayout.LayoutParams(0, -2, 1));
-        nextTimeV = Ui.tv(this, cfg, "", big ? 44 : 36, true);
+        nextTimeV = Ui.tv(this, cfg, "", big ? 42 : 32, true);
         nextTimeV.setTextDirection(View.TEXT_DIRECTION_LTR);
         row.addView(nextTimeV);
         c.addView(row);
@@ -1090,9 +1089,8 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         // poster strip (start side) + hero (end side), like the reference design
         HorizontalScrollView hs = new HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
-        hs.setClipChildren(false);
         hs.setClipToPadding(false);
-        hs.setPadding(u(6), u(10), u(6), u(10));
+        hs.setPadding(u(16), u(14), u(16), u(14));
         strip = new LinearLayout(this);
         strip.setOrientation(LinearLayout.HORIZONTAL);
         strip.setClipChildren(false);
@@ -1415,9 +1413,8 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
 
         HorizontalScrollView hs = new HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
-        hs.setClipChildren(false);
         hs.setClipToPadding(false);
-        hs.setPadding(u(8), u(18), u(8), u(18));
+        hs.setPadding(u(16), u(18), u(16), u(18));
         favRow = new LinearLayout(this);
         favRow.setOrientation(LinearLayout.HORIZONTAL);
         favRow.setClipChildren(false);

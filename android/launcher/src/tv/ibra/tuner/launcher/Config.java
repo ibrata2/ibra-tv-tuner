@@ -143,7 +143,7 @@ public final class Config {
         if ("emerald".equals(theme)) return new int[]{0xFF03100C, 0xFF0B3B2E, 0xFF34D399, 0xFFECFDF5, 0xFF10B981};
         if ("rose".equals(theme)) return new int[]{0xFF14050C, 0xFF4A1530, 0xFFF472B6, 0xFFFDF2F8, 0xFFEC4899};
         if ("sunset".equals(theme)) return new int[]{0xFF140803, 0xFF4A1D0C, 0xFFFB923C, 0xFFFFF7ED, 0xFFF97316};
-        if ("amoled".equals(theme)) return new int[]{0xFF000000, 0xFF000000, 0xFFFFFFFF, 0xFFF5F5F5, 0xFF3B3B3B};
+        if ("amoled".equals(theme)) return new int[]{0xFF000000, 0xFF000000, 0xFF0EA5E9, 0xFFF5F5F5, 0xFF0369A1};
         if ("slate".equals(theme)) return new int[]{0xFF0B1220, 0xFF1E293B, 0xFF94A3B8, 0xFFF1F5F9, 0xFF64748B};
         if ("cream".equals(theme)) return new int[]{0xFFF7F1E8, 0xFFE6D6BF, 0xFFB45309, 0xFF1C1917, 0xFFF59E0B};
         if ("custom".equals(theme)) return new int[]{bg1, bg2, accent, text, accent};
