@@ -1095,6 +1095,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         strip.setOrientation(LinearLayout.HORIZONTAL);
         strip.setClipChildren(false);
         hs.addView(strip, new FrameLayout.LayoutParams(-2, -1));
+        contentBody.setClipChildren(true);   // the parent clips the scroll view, so posters never slide under the sidebar
         for (int i = 0; i < items.size(); i++) strip.addView(match ? matchTile(items.get(i)) : poster(items.get(i)));
 
         if (cinema) {
@@ -1419,6 +1420,7 @@ public class HomeActivity extends Activity implements SharedPreferences.OnShared
         favRow.setOrientation(LinearLayout.HORIZONTAL);
         favRow.setClipChildren(false);
         hs.addView(favRow);
+        sec.setClipChildren(true);
         sec.addView(hs);
         updateEditLabel();
         return sec;

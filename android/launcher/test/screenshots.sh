@@ -19,6 +19,7 @@ shot() { sleep "${2:-8}"; $A exec-out screencap -p > "$OUT/$1.png"; echo "shot $
 cfg() { $A shell am broadcast -n tv.ibra.tuner.launcher/.ConfigReceiver -a tv.ibra.tuner.APPLY_CONFIG --es cfg "$(printf '%s' "$1" | base64 -w0)" ${2:+--es open $2} >/dev/null; }
 key() { $A shell input keyevent "$@"; }
 
+cfg '{"updateMode":"off"}'
 shot 01-home-series 45
 shot 01b-home-later 20
 cfg '{"contentCat":"anime"}';                         shot 02-home-anime 20
